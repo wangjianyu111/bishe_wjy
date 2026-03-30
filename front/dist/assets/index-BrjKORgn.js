@@ -1,0 +1,1 @@
+import{_ as a,r as n,o as r,c,w as l,a as o,i as t}from"./index-D-adZPYb.js";const _={};function d(p,e){const s=n("el-card");return r(),c(s,null,{default:l(()=>[...e[0]||(e[0]=[o("p",null,[t("角色与权限分配可对接 "),o("code",null,"/api/system/roles"),t(" 等接口扩展（当前后端已具备 RBAC 表结构）。")],-1)])]),_:1})}const i=a(_,[["render",d]]);export{i as default};

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.SysPermissionMapper">
+
+    <select id="selectPermCodesByUserId" resultType="java.lang.String">
+        SELECT DISTINCT p.perm_code
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.perm_id = rp.perm_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+          AND p.is_deleted = 0
+    </select>
+
+    <select id="selectPermissionsByUserId" resultType="com.gdplatform.entity.SysPermission">
+        SELECT DISTINCT p.*
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.perm_id = rp.perm_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+          AND p.is_deleted = 0
+        ORDER BY p.sort_order ASC, p.perm_id ASC
+    </select>
+
+    <select id="selectAllAsTree" resultType="com.gdplatform.dto.PermissionTreeNode">
+        SELECT perm_id AS permId,
+               parent_id AS parentId,
+               perm_name AS permName,
+               perm_code AS permCode,
+               perm_type AS permType,
+               path,
+               component,
+               icon,
+               sort_order AS sortOrder,
+               visible,
+               create_time AS createTime,
+               update_time AS updateTime
+        FROM sys_permission
+        WHERE is_deleted = 0
+        ORDER BY sort_order ASC, perm_id ASC
+    </select>
+
+    <select id="selectAllList" resultType="com.gdplatform.entity.SysPermission">
+        SELECT * FROM sys_permission WHERE is_deleted = 0 ORDER BY sort_order ASC, perm_id ASC
+    </select>
+</mapper>

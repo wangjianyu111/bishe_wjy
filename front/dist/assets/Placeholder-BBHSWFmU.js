@@ -1,0 +1,1 @@
+import{_ as r,r as t,o as a,c as n,w as c,a as s}from"./index-D-adZPYb.js";const l={};function _(d,e){const o=t("el-card");return a(),n(o,null,{default:c(()=>[...e[0]||(e[0]=[s("p",null,"该功能页面待实现，请在后端补充接口后在此对接。",-1)])]),_:1})}const p=r(l,[["render",_]]);export{p as default};

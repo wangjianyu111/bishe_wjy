@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.SysRoleMapper">
+
+    <select id="selectRolePage" resultType="com.gdplatform.dto.RoleResp">
+        SELECT role_id AS roleId,
+               role_name AS roleName,
+               role_code AS roleCode,
+               remark,
+               create_time AS createTime,
+               update_time AS updateTime
+        FROM sys_role
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (role_name LIKE CONCAT('%', #{keyword}, '%') OR role_code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY role_id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countRolePage" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_role
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (role_name LIKE CONCAT('%', #{keyword}, '%') OR role_code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <select id="selectPermIdsByRoleId" resultType="java.lang.Long">
+        SELECT perm_id FROM sys_role_permission WHERE role_id = #{roleId}
+    </select>
+
+    <delete id="deleteRolePermissionByRoleId">
+        DELETE FROM sys_role_permission WHERE role_id = #{roleId}
+    </delete>
+
+    <insert id="batchInsertRolePermission">
+        INSERT INTO sys_role_permission (role_id, perm_id) VALUES
+        <foreach collection="permIds" item="permId" separator=",">
+            (#{roleId}, #{permId})
+        </foreach>
+    </insert>
+</mapper>

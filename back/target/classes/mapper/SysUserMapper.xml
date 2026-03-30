@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.SysUserMapper">
+
+    <select id="selectUserPage" resultType="com.gdplatform.dto.UserResp">
+        SELECT user_id AS userId,
+               user_name AS userName,
+               real_name AS realName,
+               user_type AS userType,
+               student_no AS studentNo,
+               teacher_no AS teacherNo,
+               college_id AS collegeId,
+               major_id AS majorId,
+               user_avatar AS userAvatar,
+               user_phone AS userPhone,
+               user_email AS userEmail,
+               status,
+               create_time AS createTime,
+               update_time AS updateTime
+        FROM sys_user
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (user_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR real_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY user_id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countUserPage" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_user
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (user_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR real_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <select id="selectRoleIdsByUserId" resultType="java.lang.Long">
+        SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
+    </select>
+
+    <delete id="deleteUserRoleByUserId">
+        DELETE FROM sys_user_role WHERE user_id = #{userId}
+    </delete>
+
+    <insert id="batchInsertUserRole">
+        <if test="roleIds != null and roleIds.size() > 0">
+            INSERT INTO sys_user_role (user_id, role_id) VALUES
+            <foreach collection="roleIds" item="roleId" separator=",">
+                (#{userId}, #{roleId})
+            </foreach>
+        </if>
+    </insert>
+</mapper>

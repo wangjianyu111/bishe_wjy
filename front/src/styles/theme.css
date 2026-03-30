@@ -1,0 +1,106 @@
+/* TidalFlow 风格：浅色背景、紫主色、大圆角、柔和阴影 */
+
+:root {
+  --tf-bg-app: #f8f9fe;
+  --tf-bg-sidebar: #f0f1f7;
+  --tf-bg-card: #ffffff;
+  --tf-primary: #6366f1;
+  --tf-primary-hover: #4f46e5;
+  --tf-text-strong: #1f2937;
+  --tf-text-muted: #6b7280;
+  --tf-shadow-card: 0 4px 24px rgba(15, 23, 42, 0.06);
+  --tf-shadow-soft: 0 2px 12px rgba(99, 102, 241, 0.08);
+  --tf-radius-lg: 16px;
+  --tf-radius-md: 12px;
+  --tf-radius-sm: 8px;
+
+  --el-color-primary: #6366f1;
+  --el-color-primary-light-3: #818cf8;
+  --el-color-primary-light-5: #a5b4fc;
+  --el-color-primary-light-7: #c7d2fe;
+  --el-color-primary-light-9: #e0e7ff;
+  --el-color-primary-dark-2: #4f46e5;
+  --el-border-radius-base: 12px;
+  --el-border-radius-small: 8px;
+  --el-border-radius-round: 16px;
+  --el-fill-color-blank: #ffffff;
+  --el-bg-color: #f8f9fe;
+  --el-text-color-primary: #1f2937;
+  --el-text-color-regular: #6b7280;
+  --el-border-color-lighter: #e5e7eb;
+}
+
+html,
+body,
+#app {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: var(--tf-text-strong);
+  background-color: var(--tf-bg-app);
+}
+
+/* 卡片 */
+.el-card {
+  border: none !important;
+  border-radius: var(--tf-radius-lg) !important;
+  box-shadow: var(--tf-shadow-card) !important;
+}
+
+.el-card__header {
+  border-bottom: 1px solid #f3f4f6 !important;
+  font-weight: 600;
+  color: var(--tf-text-strong);
+  padding: 18px 24px !important;
+}
+
+.el-card__body {
+  padding: 24px !important;
+}
+
+/* 表格：更轻的视觉 */
+.el-table {
+  --el-table-border-color: #f3f4f6;
+  --el-table-header-bg-color: #f9fafb;
+  --el-table-row-hover-bg-color: #f8f9fe;
+  border-radius: var(--tf-radius-md);
+  overflow: hidden;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: var(--tf-text-muted);
+}
+
+/* 表单控件 */
+.el-input__wrapper {
+  border-radius: var(--tf-radius-sm) !important;
+  box-shadow: 0 0 0 1px #e5e7eb inset !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--tf-primary) inset, 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+}
+
+.el-select .el-input__wrapper {
+  border-radius: var(--tf-radius-sm) !important;
+}
+
+.el-button--primary {
+  border-radius: var(--tf-radius-sm) !important;
+  font-weight: 600;
+}
+
+.el-pagination {
+  --el-pagination-button-bg-color: #fff;
+  --el-pagination-hover-color: var(--tf-primary);
+}
+
+.el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
+  background-color: var(--tf-primary) !important;
+}
+
+/* 标签 */
+.el-tag {
+  border-radius: 6px !important;
+}
