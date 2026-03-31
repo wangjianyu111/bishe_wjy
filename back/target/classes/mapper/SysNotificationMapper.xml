@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.SysNotificationMapper">
+
+    <select id="selectNotificationPage" resultType="com.gdplatform.dto.NotificationResp">
+        SELECT
+            MAX(n.notice_id) AS noticeId,
+            n.group_id AS groupId,
+            n.title,
+            n.content,
+            n.notice_type AS noticeType,
+            n.sender_id AS senderId,
+            s.real_name AS senderName,
+            n.biz_type AS bizType,
+            n.biz_id AS bizId,
+            MAX(n.create_time) AS createTime,
+            COUNT(n.notice_id) AS receiverCount,
+            SUM(IFNULL(n.is_read, 0)) AS readCount,
+            GROUP_CONCAT(r.real_name ORDER BY n.receiver_id SEPARATOR ',') AS receiverNames
+        FROM sys_notification n
+        LEFT JOIN sys_user s ON n.sender_id = s.user_id AND s.is_deleted = 0
+        LEFT JOIN sys_user r ON n.receiver_id = r.user_id AND r.is_deleted = 0
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND n.title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        GROUP BY n.group_id, n.title, n.content, n.notice_type, n.sender_id, s.real_name, n.biz_type, n.biz_id
+        ORDER BY MAX(n.notice_id) DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countNotificationPage" resultType="long">
+        SELECT COUNT(DISTINCT group_id)
+        FROM sys_notification
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectListByReceiverId" resultType="com.gdplatform.dto.NotificationResp">
+        SELECT n.notice_id AS noticeId,
+               n.title,
+               n.content,
+               n.notice_type AS noticeType,
+               n.sender_id AS senderId,
+               s.real_name AS senderName,
+               n.receiver_id AS receiverId,
+               n.is_read AS isRead,
+               n.biz_type AS bizType,
+               n.biz_id AS bizId,
+               n.create_time AS createTime
+        FROM sys_notification n
+        LEFT JOIN sys_user s ON n.sender_id = s.user_id AND s.is_deleted = 0
+        WHERE n.receiver_id = #{receiverId}
+        ORDER BY n.notice_id DESC
+    </select>
+
+    <select id="countUnreadByReceiverId" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_notification
+        WHERE receiver_id = #{receiverId} AND is_read = 0
+    </select>
+
+    <select id="selectReceiverStatusByNoticeId" resultType="com.gdplatform.dto.ReceiverStatusResp">
+        SELECT n.receiver_id AS receiverId,
+               u.real_name AS receiverName,
+               u.user_name AS receiverUserName,
+               IFNULL(n.is_read, 0) AS isRead,
+               DATE_FORMAT(n.create_time, '%Y-%m-%d %H:%i:%s') AS noticeTime
+        FROM sys_notification n
+        LEFT JOIN sys_user u ON n.receiver_id = u.user_id AND u.is_deleted = 0
+        WHERE n.notice_id = #{noticeId}
+        ORDER BY n.is_read ASC, n.receiver_id ASC
+    </select>
+
+    <select id="selectReceiverStatusByGroupId" resultType="com.gdplatform.dto.ReceiverStatusResp">
+        SELECT n.receiver_id AS receiverId,
+               u.real_name AS receiverName,
+               u.user_name AS receiverUserName,
+               IFNULL(n.is_read, 0) AS isRead,
+               DATE_FORMAT(n.create_time, '%Y-%m-%d %H:%i:%s') AS noticeTime
+        FROM sys_notification n
+        LEFT JOIN sys_user u ON n.receiver_id = u.user_id AND u.is_deleted = 0
+        WHERE n.group_id = #{groupId}
+        ORDER BY n.is_read ASC, n.receiver_id ASC
+    </select>
+
+</mapper>

@@ -119,6 +119,7 @@ CREATE TABLE sys_role_permission (
 DROP TABLE IF EXISTS sys_notification;
 CREATE TABLE sys_notification (
   notice_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  group_id VARCHAR(36) DEFAULT NULL COMMENT '通知组ID，用于关联同一通知的多个接收人',
   title VARCHAR(200) NOT NULL,
   content TEXT,
   notice_type TINYINT DEFAULT 1 COMMENT '1系统 2审批 3预警',
@@ -129,6 +130,7 @@ CREATE TABLE sys_notification (
   biz_id BIGINT DEFAULT NULL,
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   KEY idx_receiver (receiver_id, is_read),
+  KEY idx_group_id (group_id),
   CONSTRAINT fk_notice_sender FOREIGN KEY (sender_id) REFERENCES sys_user (user_id),
   CONSTRAINT fk_notice_receiver FOREIGN KEY (receiver_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息通知';
@@ -496,7 +498,7 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (2,  1, '用户管理',        'sys:user',                   2, '/sys/user',             'system/user/index',       'User',                1),
 (3,  1, '角色管理',        'sys:role',                   2, '/sys/role',             'system/role/index',       'UserFilled',          2),
 (4,  1, '权限管理',        'sys:permission',              2, '/sys/permission',       'system/permission/index', 'Lock',                3),
-(5,  1, '消息通知管理',    'sys:notification',            2, '/sys/notification',     NULL,                  'Bell',                4);
+(5,  1, '消息通知管理',    'sys:notification',            2, '/sys/notification',     'sys/notification/index',  'Bell',                4);
 
 -- （二）毕业设计项目管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES

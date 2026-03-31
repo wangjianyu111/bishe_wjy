@@ -28,7 +28,56 @@
         <span class="title">{{ currentTitle }}</span>
         <div class="header-right">
           <el-icon class="header-icon"><Search /></el-icon>
-          <el-icon class="header-icon"><Bell /></el-icon>
+          <el-badge :value="store.unreadNoticeCount" :hidden="store.unreadNoticeCount === 0" :max="99">
+            <el-icon class="header-icon" @click="openNoticePanel">
+              <Bell />
+            </el-icon>
+          </el-badge>
+
+          <!-- 消息通知下拉面板 -->
+          <el-popover
+            :visible="noticeVisible"
+            placement="bottom-end"
+            :width="380"
+            trigger="click"
+            @update:visible="(v) => (noticeVisible = v)"
+          >
+            <template #reference>
+              <span></span>
+            </template>
+            <template #default>
+              <div class="notice-panel">
+                <div class="notice-header">
+                  <span class="notice-title">我的消息</span>
+                  <span class="notice-count" v-if="store.unreadNoticeCount > 0">
+                    未读 {{ store.unreadNoticeCount }} 条
+                  </span>
+                </div>
+                <el-scrollbar class="notice-scroll" v-loading="noticeLoading">
+                  <div v-if="noticeList.length === 0" class="notice-empty">
+                    <el-icon size="32" color="#dcdfe6"><Bell /></el-icon>
+                    <p>暂无消息通知</p>
+                  </div>
+                  <div
+                    v-for="notice in noticeList"
+                    :key="notice.noticeId"
+                    class="notice-item"
+                    @click="openNoticeDetail(notice)"
+                  >
+                    <div class="notice-item-header">
+                      <el-tag type="info" size="small">{{ typeLabel(notice.noticeType) }}</el-tag>
+                      <span class="notice-item-time">{{ formatDate(notice.createTime) }}</span>
+                    </div>
+                    <div class="notice-item-title">{{ notice.title }}</div>
+                    <div class="notice-item-content">{{ notice.content }}</div>
+                  </div>
+                </el-scrollbar>
+                <div class="notice-footer" v-if="noticeList.length > 0">
+                  <el-button type="primary" link size="small" @click="handleMarkAllRead">全部已读</el-button>
+                </div>
+              </div>
+            </template>
+          </el-popover>
           <div class="header-avatar">{{ userInitial }}</div>
         </div>
       </el-header>
@@ -36,15 +85,45 @@
         <router-view />
       </el-main>
     </el-container>
+
+    <!-- 消息详情弹窗 -->
+    <el-dialog v-model="detailVisible" title="消息详情" width="500px" destroy-on-close>
+      <div v-if="currentNotice" class="notice-detail">
+        <div class="detail-row">
+          <span class="detail-label">消息类型</span>
+          <el-tag type="info" size="small">{{ typeLabel(currentNotice.noticeType) }}</el-tag>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">发送时间</span>
+          <span>{{ formatDate(currentNotice.createTime) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">发件人</span>
+          <span>{{ currentNotice.senderName || '系统' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">消息标题</span>
+          <span>{{ currentNotice.title }}</span>
+        </div>
+        <div class="detail-content">
+          <div class="detail-label">消息内容</div>
+          <div class="detail-text">{{ currentNotice.content }}</div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { HomeFilled, Search, Bell } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import SideMenu from './SideMenu.vue'
+import { fetchUnreadCount, fetchUserNotificationList, markRead, markAllRead } from '@/api/notification'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,10 +137,81 @@ const userInitial = computed(() => {
   return n ? String(n).slice(0, 1) : '用'
 })
 
+// ---------- 消息通知 ----------
+const noticeVisible = ref(false)
+const noticeList = ref([])
+const noticeLoading = ref(false)
+const detailVisible = ref(false)
+const currentNotice = ref(null)
+
+async function loadUnreadCount() {
+  if (!store.token) return
+  try {
+    const count = await fetchUnreadCount()
+    store.setUnreadCount(count)
+  } catch { /* 静默失败 */ }
+}
+
+async function loadNoticeList() {
+  noticeLoading.value = true
+  try {
+    noticeList.value = await fetchUserNotificationList()
+  } catch { /* 静默失败 */ }
+  finally { noticeLoading.value = false }
+}
+
+async function openNoticePanel() {
+  noticeVisible.value = !noticeVisible.value
+  if (noticeVisible.value) {
+    await loadNoticeList()
+  }
+}
+
+async function openNoticeDetail(notice) {
+  currentNotice.value = notice
+  detailVisible.value = true
+  if (notice.isRead === 0) {
+    await markRead(notice.noticeId)
+    notice.isRead = 1
+    store.decrementUnread()
+  }
+}
+
+async function handleMarkAllRead() {
+  await markAllRead()
+  store.setUnreadCount(0)
+  await loadNoticeList()
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
+function typeLabel(t) {
+  if (t === 1) return '系统通知'
+  if (t === 2) return '活动通知'
+  if (t === 3) return '审核通知'
+  return '通知'
+}
+
+// ---------- 登出 ----------
 function logout() {
   store.clear()
   router.push({ name: 'Login' })
 }
+
+onMounted(() => {
+  loadUnreadCount()
+  const interval = setInterval(loadUnreadCount, 30000)
+  // 清理需要在组件卸载时处理，此处简化处理
+})
 </script>
 
 <style scoped>
@@ -287,5 +437,139 @@ function logout() {
   background: transparent;
   min-height: calc(100vh - 64px);
   padding: 24px !important;
+}
+
+/* 消息通知面板 */
+.notice-panel {
+  margin: -12px;
+}
+
+.notice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.notice-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.notice-count {
+  font-size: 12px;
+  color: #f56c6c;
+  font-weight: 500;
+}
+
+.notice-scroll {
+  max-height: 400px;
+}
+
+.notice-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: #909399;
+  gap: 8px;
+}
+
+.notice-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.notice-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f9fafb;
+  transition: background 0.2s;
+}
+
+.notice-item:hover {
+  background: #f5f7fa;
+}
+
+.notice-item:last-child {
+  border-bottom: none;
+}
+
+.notice-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.notice-item-time {
+  font-size: 11px;
+  color: #c0c4cc;
+}
+
+.notice-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notice-item-content {
+  font-size: 12px;
+  color: #909399;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.5;
+}
+
+.notice-footer {
+  padding: 10px 16px;
+  text-align: center;
+  border-top: 1px solid #f3f4f6;
+}
+
+.notice-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.detail-label {
+  color: #909399;
+  flex-shrink: 0;
+  width: 70px;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-text {
+  font-size: 14px;
+  color: #303133;
+  line-height: 1.8;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>
