@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.DashboardMapper">
+
+    <select id="selectTopicStatusDistribution" resultType="com.gdplatform.dto.NameValue">
+        SELECT IFNULL(NULLIF(TRIM(status), ''), '未设置') AS name, COUNT(*) AS `value`
+        FROM project_topic
+        WHERE is_deleted = 0
+        GROUP BY IFNULL(NULLIF(TRIM(status), ''), '未设置')
+    </select>
+
+    <select id="selectTopicMonthlyNewLast12" resultType="com.gdplatform.dto.MonthCountPoint">
+        SELECT DATE_FORMAT(create_time, '%Y-%m') AS month, COUNT(*) AS total
+        FROM project_topic
+        WHERE is_deleted = 0
+          AND create_time >= DATE_SUB(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 11 MONTH)
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m')
+        ORDER BY month ASC
+    </select>
+
+    <select id="selectSelectionMonthlyLast12" resultType="com.gdplatform.dto.MonthCountPoint">
+        SELECT DATE_FORMAT(create_time, '%Y-%m') AS month, COUNT(*) AS total
+        FROM project_selection
+        WHERE is_deleted = 0
+          AND create_time >= DATE_SUB(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 11 MONTH)
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m')
+        ORDER BY month ASC
+    </select>
+
+    <select id="selectRecentTopics" resultType="com.gdplatform.dto.RecentTopicRow">
+        SELECT t.topic_id AS topicId,
+               t.topic_name AS topicName,
+               t.academic_year AS academicYear,
+               t.status AS status,
+               u.real_name AS teacherName
+        FROM project_topic t
+        LEFT JOIN sys_user u ON t.teacher_id = u.user_id AND u.is_deleted = 0
+        WHERE t.is_deleted = 0
+        ORDER BY t.create_time DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

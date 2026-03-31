@@ -1,7 +1,7 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <span>选题发布 / 浏览</span>
+      <span>选题发布</span>
     </template>
     <el-form :inline="true" class="filter">
       <el-form-item label="学年">
@@ -14,7 +14,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="关键词">
-        <el-input v-model="query.keyword" placeholder="课题名称" clearable style="width: 180px" />
+        <el-input v-model="query.keyword" placeholder="毕设题目" clearable style="width: 180px" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="load">查询</el-button>
@@ -22,7 +22,7 @@
     </el-form>
     <el-table :data="table.records" v-loading="loading" border stripe>
       <el-table-column prop="topicId" label="ID" width="70" />
-      <el-table-column prop="topicName" label="课题名称" min-width="220" show-overflow-tooltip />
+      <el-table-column prop="topicName" label="毕设题目" min-width="220" show-overflow-tooltip />
       <el-table-column prop="academicYear" label="学年" width="120" />
       <el-table-column prop="maxStudents" label="名额" width="80" />
       <el-table-column prop="currentCount" label="已选" width="80" />

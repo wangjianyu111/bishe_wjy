@@ -1,7 +1,9 @@
 D:\bishe-wjy\back\src\main\java\com\gdplatform\controller\SysRoleController.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\entity\SysUser.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\entity\SysNotification.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\RecentTopicRow.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\controller\AuthController.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\DashboardOverviewResp.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\NotificationService.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\UserProfile.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\mapper\SysPermissionMapper.java
@@ -24,6 +26,8 @@ D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\UserAddReq.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\mapper\ProjectSelectionMapper.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\config\MybatisPlusConfig.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\common\R.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\controller\DashboardController.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\service\DashboardService.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\AuthService.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\RoleResp.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\mapper\ProjectTopicMapper.java
@@ -32,12 +36,15 @@ D:\bishe-wjy\back\src\main\java\com\gdplatform\controller\ProjectSelectionContro
 D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\NotificationAddReq.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\LoginRequest.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\UserService.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\UserProfileUpdateReq.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\mapper\SysUserMapper.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\entity\ProjectSelection.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\RoleService.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\MonthCountPoint.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\PermissionUpdateReq.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\ProjectSelectionService.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\UserResp.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\ChangePasswordReq.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\controller\NotificationController.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\mapper\SysRoleMapper.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\security\RestAccessDeniedHandler.java
@@ -50,6 +57,7 @@ D:\bishe-wjy\back\src\main\java\com\gdplatform\common\GlobalExceptionHandler.jav
 D:\bishe-wjy\back\src\main\java\com\gdplatform\security\JwtUtil.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\impl\UserServiceImpl.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\MailService.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\mapper\DashboardMapper.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\security\LoginUser.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\impl\MailServiceImpl.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\impl\PermissionServiceImpl.java
@@ -59,7 +67,9 @@ D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\PermissionTreeNode.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\PermissionService.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\service\impl\NotificationServiceImpl.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\SelectionApplyRequest.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\NameValue.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\dto\RoleUpdateReq.java
+D:\bishe-wjy\back\src\main\java\com\gdplatform\service\impl\DashboardServiceImpl.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\entity\ProjectTopic.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\util\VerificationCodeUtil.java
 D:\bishe-wjy\back\src\main\java\com\gdplatform\entity\SysRole.java

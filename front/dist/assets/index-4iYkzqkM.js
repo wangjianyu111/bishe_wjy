@@ -1,1 +1,0 @@
-import{_ as t,r,o as a,c,w as l,a as o,i as s}from"./index-D-adZPYb.js";const _={};function d(i,e){const n=r("el-card");return a(),c(n,null,{default:l(()=>[...e[0]||(e[0]=[o("p",null,[s("权限树维护可对接 "),o("code",null,"sys_permission"),s(" 与菜单路由字段，建议在管理端实现树形表格编辑。")],-1)])]),_:1})}const f=t(_,[["render",d]]);export{f as default};

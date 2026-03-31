@@ -1,1 +1,0 @@
-import{_ as t,r as n,o as c,c as s,w as l,a as o,i as r}from"./index-D-adZPYb.js";const _={};function d(p,e){const a=n("el-card");return c(),s(a,null,{default:l(()=>[...e[0]||(e[0]=[o("p",null,[r("选题审批、开题/中期/论文等审批流可在后端基于 "),o("code",null,"approval_record"),r(" 表扩展，此处为占位页。")],-1)])]),_:1})}const u=t(_,[["render",d]]);export{u as default};
