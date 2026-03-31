@@ -28,7 +28,11 @@
         </template>
       </el-table-column>
       <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="createTime" label="创建时间" width="170" />
+      <el-table-column prop="createTime" label="创建时间" width="170">
+        <template #default="{ row }">
+          {{ formatDate(row.createTime) }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="openEdit(row)">编辑</el-button>
@@ -85,7 +89,7 @@
         default-expand-all
         check-strictly
       >
-        <template #default="{ node, data }">
+        <template #default="{ data }">
           <span class="node-label">
             <span>{{ data.permName }}</span>
             <el-tag type="info" size="small" style="margin-left: 6px">{{ permTypeLabel(data.permType) }}</el-tag>
@@ -153,6 +157,18 @@ const permTree = ref([])
 // ---------- 工具函数 ----------
 function permTypeLabel(t) {
   return { 1: '菜单', 2: '按钮', 3: '接口' }[t] ?? '—'
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
 // ---------- 数据加载 ----------

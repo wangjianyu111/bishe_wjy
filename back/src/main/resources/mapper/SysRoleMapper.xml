@@ -14,7 +14,7 @@
         <if test="keyword != null and keyword != ''">
             AND (role_name LIKE CONCAT('%', #{keyword}, '%') OR role_code LIKE CONCAT('%', #{keyword}, '%'))
         </if>
-        ORDER BY role_id DESC
+        ORDER BY role_id ASC
         LIMIT #{offset}, #{limit}
     </select>
 
