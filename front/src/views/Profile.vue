@@ -16,7 +16,6 @@
       >
         <div class="avatar-section">
           <div class="avatar-large">{{ userInitial }}</div>
-          <p class="avatar-hint">点击头像可自定义（暂不支持）</p>
         </div>
 
         <el-divider content-position="left">基本信息</el-divider>
