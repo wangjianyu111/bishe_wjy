@@ -18,8 +18,7 @@
           <div class="avatar-large">{{ userInitial }}</div>
         </div>
 
-        <el-divider content-position="left">基本信息</el-divider>
-
+        <el-divider>基本信息</el-divider>
         <el-form-item label="登录账号">
           <el-input :model-value="form.userName" disabled />
         </el-form-item>
