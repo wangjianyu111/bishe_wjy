@@ -2,12 +2,14 @@ package com.gdplatform.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.gdplatform.common.BizException;
+import com.gdplatform.dto.ChangePasswordReq;
 import com.gdplatform.dto.EmailLoginRequest;
 import com.gdplatform.dto.LoginRequest;
 import com.gdplatform.dto.LoginResponse;
 import com.gdplatform.dto.RegisterRequest;
 import com.gdplatform.dto.SendVerificationCodeRequest;
 import com.gdplatform.dto.UserProfile;
+import com.gdplatform.dto.UserProfileUpdateReq;
 import com.gdplatform.entity.SysRole;
 import com.gdplatform.entity.SysUser;
 import com.gdplatform.mapper.SysRoleMapper;
@@ -18,6 +20,7 @@ import com.gdplatform.service.AuthService;
 import com.gdplatform.service.MailService;
 import com.gdplatform.service.PermissionService;
 import com.gdplatform.util.VerificationCodeUtil;
+import com.gdplatform.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -189,5 +192,48 @@ public class AuthServiceImpl implements AuthService {
 
     private String code2pwd(String code) {
         return "gd_" + code + "_mail";
+    }
+
+    @Override
+    public void changePassword(ChangePasswordReq request) {
+        SysUser user = sysUserMapper.selectById(SecurityUtils.currentUser().getUserId());
+        if (user == null) {
+            throw new BizException("用户不存在");
+        }
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getUserPassword())) {
+            throw new BizException("原密码错误");
+        }
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            if (request.getNewPassword().length() < 6 || request.getNewPassword().length() > 50) {
+                throw new BizException("新密码长度为6-50位");
+            }
+            user.setUserPassword(passwordEncoder.encode(request.getNewPassword()));
+            sysUserMapper.updateById(user);
+        }
+    }
+
+    @Override
+    public void updateProfile(UserProfileUpdateReq req) {
+        Long userId = SecurityUtils.currentUser().getUserId();
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) {
+            throw new BizException("用户不存在");
+        }
+        if (req.getRealName() != null) {
+            user.setRealName(req.getRealName());
+        }
+        if (req.getStudentNo() != null) {
+            user.setStudentNo(req.getStudentNo());
+        }
+        if (req.getTeacherNo() != null) {
+            user.setTeacherNo(req.getTeacherNo());
+        }
+        if (req.getUserPhone() != null) {
+            user.setUserPhone(req.getUserPhone());
+        }
+        if (req.getUserEmail() != null) {
+            user.setUserEmail(req.getUserEmail());
+        }
+        sysUserMapper.updateById(user);
     }
 }

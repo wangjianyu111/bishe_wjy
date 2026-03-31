@@ -19,3 +19,11 @@ export function sendVerificationCode(data) {
 export function emailLogin(data) {
   return http.post('/auth/email-login', data)
 }
+
+export function changePassword(data) {
+  return http.post('/auth/change-password', data)
+}
+
+export function updateProfile(data) {
+  return http.put('/auth/profile', data)
+}

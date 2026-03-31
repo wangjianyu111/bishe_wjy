@@ -1,12 +1,14 @@
 package com.gdplatform.controller;
 
 import com.gdplatform.common.R;
+import com.gdplatform.dto.ChangePasswordReq;
 import com.gdplatform.dto.EmailLoginRequest;
 import com.gdplatform.dto.LoginRequest;
 import com.gdplatform.dto.LoginResponse;
 import com.gdplatform.dto.RegisterRequest;
 import com.gdplatform.dto.SendVerificationCodeRequest;
 import com.gdplatform.dto.UserProfile;
+import com.gdplatform.dto.UserProfileUpdateReq;
 import com.gdplatform.entity.SysRole;
 import com.gdplatform.mapper.SysRoleMapper;
 import com.gdplatform.security.LoginUser;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,6 +55,18 @@ public class AuthController {
     @PostMapping("/email-login")
     public R<LoginResponse> emailLogin(@Valid @RequestBody EmailLoginRequest request) {
         return R.ok(authService.emailLogin(request));
+    }
+
+    @PostMapping("/change-password")
+    public R<Void> changePassword(@Valid @RequestBody ChangePasswordReq request) {
+        authService.changePassword(request);
+        return R.ok();
+    }
+
+    @PutMapping("/profile")
+    public R<Void> updateProfile(@Valid @RequestBody UserProfileUpdateReq req) {
+        authService.updateProfile(req);
+        return R.ok();
     }
 
     @GetMapping("/info")

@@ -27,7 +27,6 @@
       <el-header class="header">
         <span class="title">{{ currentTitle }}</span>
         <div class="header-right">
-          <el-icon class="header-icon"><Search /></el-icon>
           <el-badge :value="store.unreadNoticeCount" :hidden="store.unreadNoticeCount === 0" :max="99">
             <el-icon class="header-icon" @click="openNoticePanel">
               <Bell />
@@ -78,7 +77,9 @@
               </div>
             </template>
           </el-popover>
-          <div class="header-avatar">{{ userInitial }}</div>
+          <div class="header-avatar" @click="goProfile" title="个人资料">
+            {{ userInitial }}
+          </div>
         </div>
       </el-header>
       <el-main class="main">
@@ -120,7 +121,7 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, Search, Bell } from '@element-plus/icons-vue'
+import { HomeFilled, Bell } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import SideMenu from './SideMenu.vue'
 import { fetchUnreadCount, fetchUserNotificationList, markRead, markAllRead } from '@/api/notification'
@@ -205,6 +206,10 @@ function typeLabel(t) {
 function logout() {
   store.clear()
   router.push({ name: 'Login' })
+}
+
+function goProfile() {
+  router.push({ name: 'Profile' })
 }
 
 onMounted(() => {
@@ -431,6 +436,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.header-avatar:hover {
+  opacity: 0.85;
 }
 
 .main {
