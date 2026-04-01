@@ -483,7 +483,8 @@ INSERT INTO sys_user (user_id, user_name, user_password, real_name, user_type, s
 INSERT INTO sys_role (role_id, role_name, role_code, remark) VALUES
 (1, '管理员', 'ROLE_ADMIN', '系统管理'),
 (2, '指导教师', 'ROLE_TEACHER', '教师'),
-(3, '学生', 'ROLE_STUDENT', '学生');
+(3, '学生', 'ROLE_STUDENT', '学生'),
+(4, '待分配', 'ROLE_PENDING', '新注册未分配权限的用户');
 
 INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1), (2, 2), (3, 3);
 
@@ -543,6 +544,10 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (53, 50,'版本更新管理',   'sysops:version',            2, '/sysops/version',       NULL,                  'Refresh',             3),
 (54, 50,'操作日志管理',   'sysops:log',                2, '/sysops/log',           NULL,                  'List',                4);
 
+-- 首页（Dashboard）
+INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
+(55, 0, '首页',           'dashboard',                 2, '/dashboard',            'Dashboard',           'HomeFilled',          0);
+
 -- ============================================================
 -- 接口级权限（按钮/接口级别，perm_type=4，后端接口鉴权用）
 -- ============================================================
@@ -599,10 +604,10 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 INSERT INTO sys_role_permission (role_id, perm_id)
 SELECT 1, perm_id FROM sys_permission;
 
--- 教师：用户与权限管理（只读目录），毕业设计项目管理（全部），文档材料（全部），成果审批（全部），指导监控（全部），运维（只读日志）
+-- 教师：用户与权限管理（只读目录），毕业设计项目管理（全部），文档材料（全部），成果审批（全部），指导监控（全部），运维（只读日志），首页
 INSERT INTO sys_role_permission (role_id, perm_id)
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54)
+(1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134);

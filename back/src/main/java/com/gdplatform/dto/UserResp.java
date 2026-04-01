@@ -22,4 +22,5 @@ public class UserResp {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private List<Long> roleIds;
+    private String roleNames; // GROUP_CONCAT 拼出的角色名，如"管理员,学生"
 }

@@ -101,11 +101,7 @@ public class AuthServiceImpl implements AuthService {
         user.setStatus(1);
 
         sysUserMapper.insert(user);
-
-        SysRole studentRole = sysRoleMapper.selectByRoleCode("student");
-        if (studentRole != null) {
-            sysRoleMapper.insertUserRole(user.getUserId(), studentRole.getRoleId());
-        }
+        sysUserMapper.batchInsertUserRole(user.getUserId(), List.of(4L)); // ROLE_PENDING
     }
     
     @Override
@@ -145,17 +141,13 @@ public class AuthServiceImpl implements AuthService {
             // 自动创建账号，邮箱作为用户名
             user = new SysUser();
             user.setUserName(request.getEmail().split("@")[0] + "_" + System.currentTimeMillis() % 10000);
-            user.setUserPassword(passwordEncoder.encode(code2pwd(request.getVerificationCode())));
+            user.setUserPassword(passwordEncoder.encode("123456"));
             user.setRealName(request.getEmail().split("@")[0]);
             user.setUserEmail(request.getEmail());
             user.setUserType(1);
             user.setStatus(1);
             sysUserMapper.insert(user);
-
-            SysRole studentRole = sysRoleMapper.selectByRoleCode("student");
-            if (studentRole != null) {
-                sysRoleMapper.insertUserRole(user.getUserId(), studentRole.getRoleId());
-            }
+            sysUserMapper.batchInsertUserRole(user.getUserId(), List.of(4L)); // ROLE_PENDING
         }
         
         // 生成JWT令牌
@@ -190,9 +182,6 @@ public class AuthServiceImpl implements AuthService {
         return res;
     }
 
-    private String code2pwd(String code) {
-        return "gd_" + code + "_mail";
-    }
 
     @Override
     public void changePassword(ChangePasswordReq request) {

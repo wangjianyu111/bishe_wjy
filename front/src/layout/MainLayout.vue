@@ -7,11 +7,13 @@
         </div>
         <el-scrollbar class="menu-scroll">
           <el-menu :default-active="active" router class="side-menu">
-            <el-menu-item index="/dashboard">
-              <el-icon><HomeFilled /></el-icon>
-              <span>首页</span>
-            </el-menu-item>
-            <SideMenu :menus="store.menus" />
+            <template v-if="dashboardMenu">
+              <el-menu-item :index="dashboardMenu.path">
+                <el-icon><component :is="iconComponent(dashboardMenu.icon)" /></el-icon>
+                <span>{{ dashboardMenu.permName }}</span>
+              </el-menu-item>
+            </template>
+            <SideMenu :menus="filteredMenus" />
           </el-menu>
         </el-scrollbar>
         <div class="sidebar-user">
@@ -121,7 +123,8 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeFilled, Bell } from '@element-plus/icons-vue'
+import { Bell } from '@element-plus/icons-vue'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import SideMenu from './SideMenu.vue'
 import { fetchUnreadCount, fetchUserNotificationList, markRead, markAllRead } from '@/api/notification'
@@ -132,6 +135,43 @@ const store = useUserStore()
 
 const active = computed(() => route.path)
 const currentTitle = computed(() => route.meta?.title || '首页')
+
+// 动态查找首页菜单节点（path=/dashboard）
+const dashboardMenu = computed(() => {
+  function findDashboard(nodes) {
+    for (const n of nodes) {
+      if (n.path === '/dashboard') return n
+      if (n.children?.length) {
+        const found = findDashboard(n.children)
+        if (found) return found
+      }
+    }
+    return null
+  }
+  return findDashboard(store.menus || [])
+})
+
+// 过滤掉 dashboard 节点，避免在 SideMenu 中重复渲染
+const filteredMenus = computed(() => {
+  function excludeDashboard(nodes) {
+    return nodes
+      .filter((n) => n.path !== '/dashboard')
+      .map((n) => ({
+        ...n,
+        children: n.children?.length ? excludeDashboard(n.children) : [],
+      }))
+  }
+  return excludeDashboard(store.menus || [])
+})
+
+const iconMap = Object.fromEntries(
+  Object.entries(ElementPlusIconsVue).map(([key, val]) => [key.toLowerCase(), val])
+)
+
+function iconComponent(name) {
+  if (!name) return null
+  return iconMap[name.toLowerCase()] || null
+}
 
 const userInitial = computed(() => {
   const n = store.user?.realName || store.user?.userName || ''

@@ -22,6 +22,8 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
 
     List<Long> selectRoleIdsByUserId(@Param("userId") Long userId);
 
+    List<String> selectRoleNamesByUserId(@Param("userId") Long userId);
+
     @Select("SELECT COUNT(*) > 0 FROM sys_user_role ur " +
             "INNER JOIN sys_role r ON ur.role_id = r.role_id " +
             "WHERE ur.user_id = #{userId} AND r.role_code = 'ROLE_ADMIN' AND r.is_deleted = 0")

@@ -188,8 +188,20 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElButton } from 'element-plus'
-import { login, sendVerificationCode, emailLogin } from '@/api/auth'
+import { login, sendVerificationCode, emailLogin, fetchInfo } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
+import { registerDynamicRoutes } from '@/router'
+
+function hasDashboardPermission(menus) {
+  function find(nodes) {
+    for (const n of nodes || []) {
+      if (n.path === '/dashboard') return true
+      if (n.children?.length && find(n.children)) return true
+    }
+    return false
+  }
+  return find(menus)
+}
 
 const router = useRouter()
 const store = useUserStore()
@@ -240,15 +252,20 @@ async function onSubmit() {
         email: emailForm.email,
         verificationCode: emailForm.verificationCode
       })
+      store.setSession({ token: data.token })
+      const info = await fetchInfo()
       store.setSession({
         token: data.token,
-        user: data.user,
-        menus: data.menus,
-        permissions: data.permissions,
+        user: info.user,
+        menus: info.menus,
+        permissions: info.permissions,
       })
       store.dynamicRoutesAdded = false
+      registerDynamicRoutes(info.menus)
+      store.dynamicRoutesAdded = true
+      const hasDashboard = hasDashboardPermission(info.menus)
       ElMessage.success('登录成功')
-      router.replace('/dashboard')
+      router.replace(hasDashboard ? '/dashboard' : '/empty-home')
     } finally {
       emailLoading.value = false
     }
@@ -259,15 +276,20 @@ async function onSubmit() {
     loading.value = true
     try {
       const data = await login({ username: form.username, password: form.password })
+      store.setSession({ token: data.token })
+      const info = await fetchInfo()
       store.setSession({
         token: data.token,
-        user: data.user,
-        menus: data.menus,
-        permissions: data.permissions,
+        user: info.user,
+        menus: info.menus,
+        permissions: info.permissions,
       })
       store.dynamicRoutesAdded = false
+      registerDynamicRoutes(info.menus)
+      store.dynamicRoutesAdded = true
+      const hasDashboard = hasDashboardPermission(info.menus)
       ElMessage.success('登录成功')
-      router.replace('/dashboard')
+      router.replace(hasDashboard ? '/dashboard' : '/empty-home')
     } finally {
       loading.value = false
     }

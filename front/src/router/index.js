@@ -27,6 +27,17 @@ function collectLeafRoutes(menuNodes, out = []) {
   return out
 }
 
+export function registerDynamicRoutes(menuNodes) {
+  const dynamic = collectLeafRoutes(menuNodes)
+  const names = new Set(router.getRoutes().map((r) => r.name))
+  for (const r of dynamic) {
+    if (!names.has(r.name)) {
+      router.addRoute('main', r)
+      names.add(r.name)
+    }
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -46,14 +57,7 @@ const router = createRouter({
       path: '/',
       name: 'main',
       component: () => import('../layout/MainLayout.vue'),
-      redirect: '/dashboard',
       children: [
-        {
-          path: 'dashboard',
-          name: 'Dashboard',
-          component: () => import('../views/Dashboard.vue'),
-          meta: { title: '首页' },
-        },
         {
           path: 'profile',
           name: 'Profile',
@@ -61,6 +65,18 @@ const router = createRouter({
           meta: { title: '个人资料' },
         },
       ],
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: () => import('../views/NotFound.vue'),
+      meta: { public: true },
+    },
+    {
+      path: '/empty-home',
+      name: 'EmptyHome',
+      component: () => import('../views/EmptyHome.vue'),
+      meta: { public: true },
     },
   ],
 })
@@ -75,6 +91,7 @@ router.beforeEach(async (to, from, next) => {
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
   }
+
   if (!store.dynamicRoutesAdded) {
     try {
       if (!store.user) {
@@ -87,14 +104,7 @@ router.beforeEach(async (to, from, next) => {
           permissions: data.permissions,
         })
       }
-      const dynamic = collectLeafRoutes(store.menus)
-      const names = new Set(router.getRoutes().map((r) => r.name))
-      for (const r of dynamic) {
-        if (!names.has(r.name)) {
-          router.addRoute('main', r)
-          names.add(r.name)
-        }
-      }
+      registerDynamicRoutes(store.menus)
       store.dynamicRoutesAdded = true
     } catch {
       store.clear()
@@ -102,6 +112,7 @@ router.beforeEach(async (to, from, next) => {
       return
     }
   }
+
   next()
 })
 

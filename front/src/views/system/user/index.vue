@@ -23,9 +23,23 @@
       <el-table-column prop="userId" label="ID" width="70" />
       <el-table-column prop="userName" label="登录名" width="120" />
       <el-table-column prop="realName" label="姓名" width="100" />
-      <el-table-column prop="userType" label="类型" width="90">
+      <el-table-column prop="userType" label="账号类型" width="90">
         <template #default="{ row }">
           {{ typeLabel(row.userType) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="roleNames" label="角色" width="160">
+        <template #default="{ row }">
+          <template v-if="row.roleNames">
+            <el-tag
+              v-for="name in row.roleNames.split(',')"
+              :key="name"
+              size="small"
+              :type="name === '待分配' ? 'warning' : name === '管理员' ? 'danger' : 'success'"
+              style="margin-right: 4px"
+            >{{ name }}</el-tag>
+          </template>
+          <el-tag v-else size="small" type="warning">待分配</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="studentNo" label="学号" width="120" />
@@ -146,7 +160,9 @@
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 import {
   fetchUserPage,
   fetchUserById,
@@ -158,6 +174,8 @@ import {
   fetchRoleList,
 } from '@/api/system'
 
+const router = useRouter()
+const store = useUserStore()
 const loading = ref(false)
 const submitting = ref(false)
 const roleSubmitting = ref(false)
@@ -352,6 +370,7 @@ async function openAssignRole(row) {
 async function handleAssignRoleSubmit() {
   roleSubmitting.value = true
   try {
+    const isSelf = store.user?.userId === roleDialog.userId
     await assignUserRoles({
       userId: roleDialog.userId,
       roleIds: roleDialog.selectedRoles,
@@ -359,6 +378,10 @@ async function handleAssignRoleSubmit() {
     ElMessage.success('角色分配成功')
     roleDialog.visible = false
     load()
+    if (isSelf) {
+      store.clear()
+      router.push({ name: 'Login' })
+    }
   } catch (e) {
     ElMessage.error(e.message || '分配失败')
   } finally {

@@ -32,6 +32,7 @@ public class UserServiceImpl implements UserService {
 
         for (UserResp resp : records) {
             resp.setRoleIds(sysUserMapper.selectRoleIdsByUserId(resp.getUserId()));
+            // roleNames 已由 GROUP_CONCAT 直接返回，无需再查
         }
 
         page.setRecords(records);
@@ -178,6 +179,8 @@ public class UserServiceImpl implements UserService {
         resp.setCreateTime(user.getCreateTime());
         resp.setUpdateTime(user.getUpdateTime());
         resp.setRoleIds(sysUserMapper.selectRoleIdsByUserId(user.getUserId()));
+        List<String> names = sysUserMapper.selectRoleNamesByUserId(user.getUserId());
+        resp.setRoleNames(names == null || names.isEmpty() ? null : String.join(",", names));
         return resp;
     }
 }

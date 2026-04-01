@@ -3,27 +3,31 @@
 <mapper namespace="com.gdplatform.mapper.SysUserMapper">
 
     <select id="selectUserPage" resultType="com.gdplatform.dto.UserResp">
-        SELECT user_id AS userId,
-               user_name AS userName,
-               real_name AS realName,
-               user_type AS userType,
-               student_no AS studentNo,
-               teacher_no AS teacherNo,
-               college_id AS collegeId,
-               major_id AS majorId,
-               user_avatar AS userAvatar,
-               user_phone AS userPhone,
-               user_email AS userEmail,
-               status,
-               create_time AS createTime,
-               update_time AS updateTime
-        FROM sys_user
-        WHERE is_deleted = 0
+        SELECT u.user_id AS userId,
+               u.user_name AS userName,
+               u.real_name AS realName,
+               u.user_type AS userType,
+               u.student_no AS studentNo,
+               u.teacher_no AS teacherNo,
+               u.college_id AS collegeId,
+               u.major_id AS majorId,
+               u.user_avatar AS userAvatar,
+               u.user_phone AS userPhone,
+               u.user_email AS userEmail,
+               u.status,
+               u.create_time AS createTime,
+               u.update_time AS updateTime,
+               GROUP_CONCAT(r.role_name ORDER BY r.role_id) AS roleNames
+        FROM sys_user u
+        LEFT JOIN sys_user_role ur ON u.user_id = ur.user_id
+        LEFT JOIN sys_role r ON ur.role_id = r.role_id
+        WHERE u.is_deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND (user_name LIKE CONCAT('%', #{keyword}, '%')
-                 OR real_name LIKE CONCAT('%', #{keyword}, '%'))
+            AND (u.user_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR u.real_name LIKE CONCAT('%', #{keyword}, '%'))
         </if>
-        ORDER BY user_id ASC
+        GROUP BY u.user_id
+        ORDER BY u.user_id ASC
         LIMIT #{offset}, #{limit}
     </select>
 
@@ -39,6 +43,14 @@
 
     <select id="selectRoleIdsByUserId" resultType="java.lang.Long">
         SELECT role_id FROM sys_user_role WHERE user_id = #{userId}
+    </select>
+
+    <select id="selectRoleNamesByUserId" resultType="java.lang.String">
+        SELECT r.role_name
+        FROM sys_user_role ur
+        INNER JOIN sys_role r ON ur.role_id = r.role_id
+        WHERE ur.user_id = #{userId}
+        ORDER BY r.role_id
     </select>
 
     <delete id="deleteUserRoleByUserId">
