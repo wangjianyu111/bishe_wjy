@@ -111,10 +111,10 @@
         </el-select>
       </el-form-item>
       <el-form-item label="学号" prop="studentNo">
-        <el-input v-model="form.studentNo" placeholder="请输入学号" />
+        <el-input v-model="form.studentNo" placeholder="请输入学号" :disabled="studentNoDisabled" />
       </el-form-item>
       <el-form-item label="工号" prop="teacherNo">
-        <el-input v-model="form.teacherNo" placeholder="请输入工号" />
+        <el-input v-model="form.teacherNo" placeholder="请输入工号" :disabled="teacherNoDisabled" />
       </el-form-item>
       <el-form-item label="手机" prop="userPhone">
         <el-input v-model="form.userPhone" placeholder="请输入手机号" />
@@ -159,7 +159,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
@@ -213,6 +213,16 @@ const rules = {
   realName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
   userType: [{ required: true, message: '请选择用户类型', trigger: 'change' }],
 }
+
+// ---------- 学号/工号动态禁用 ----------
+const studentNoDisabled = computed(() => form.value.userType !== 1)
+const teacherNoDisabled = computed(() => form.value.userType !== 2)
+
+// 切换用户类型时清空无关字段
+watch(() => form.value.userType, (newType) => {
+  if (newType === 1) form.value.teacherNo = ''
+  if (newType === 2) form.value.studentNo = ''
+})
 
 // ---------- 角色分配弹窗 ----------
 const roleDialog = reactive({ visible: false, userId: null, userName: '', selectedRoles: [] })
