@@ -219,6 +219,7 @@ const roleDialog = reactive({ visible: false, userId: null, userName: '', select
 
 // ---------- 工具函数 ----------
 function typeLabel(t) {
+  if (t === 0) return '待分配'
   if (t === 1) return '学生'
   if (t === 2) return '教师'
   if (t === 3) return '管理员'

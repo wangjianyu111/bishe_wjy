@@ -61,6 +61,7 @@ public class RoleServiceImpl implements RoleService {
         SysRole role = new SysRole();
         role.setRoleName(req.getRoleName());
         role.setRoleCode(req.getRoleCode());
+        role.setUserType(req.getUserType());
         role.setRemark(req.getRemark());
         sysRoleMapper.insert(role);
     }
@@ -81,6 +82,7 @@ public class RoleServiceImpl implements RoleService {
         }
         role.setRoleName(req.getRoleName());
         role.setRoleCode(req.getRoleCode());
+        role.setUserType(req.getUserType());
         role.setRemark(req.getRemark());
         sysRoleMapper.updateById(role);
     }
@@ -105,6 +107,7 @@ public class RoleServiceImpl implements RoleService {
         resp.setRoleId(role.getRoleId());
         resp.setRoleName(role.getRoleName());
         resp.setRoleCode(role.getRoleCode());
+        resp.setUserType(role.getUserType());
         resp.setRemark(role.getRemark());
         resp.setCreateTime(role.getCreateTime());
         resp.setUpdateTime(role.getUpdateTime());

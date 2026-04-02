@@ -97,7 +97,7 @@ public class AuthServiceImpl implements AuthService {
         user.setUserPassword(passwordEncoder.encode(request.getPassword()));
         user.setRealName(request.getUsername());
         user.setUserEmail(request.getEmail());
-        user.setUserType(1);
+        user.setUserType(0); // 待分配，分配角色后自动同步
         user.setStatus(1);
 
         sysUserMapper.insert(user);
@@ -144,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
             user.setUserPassword(passwordEncoder.encode("123456"));
             user.setRealName(request.getEmail().split("@")[0]);
             user.setUserEmail(request.getEmail());
-            user.setUserType(1);
+            user.setUserType(0); // 待分配，分配角色后自动同步
             user.setStatus(1);
             sysUserMapper.insert(user);
             sysUserMapper.batchInsertUserRole(user.getUserId(), List.of(4L)); // ROLE_PENDING

@@ -24,6 +24,26 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
 
     List<String> selectRoleNamesByUserId(@Param("userId") Long userId);
 
+    @Select("<script>" +
+            "SELECT r.role_code FROM sys_user_role ur " +
+            "INNER JOIN sys_role r ON ur.role_id = r.role_id " +
+            "WHERE ur.user_id = #{userId} AND r.is_deleted = 0 " +
+            "<if test='roleIds != null and roleIds.size() > 0'>" +
+            "AND ur.role_id IN <foreach collection='roleIds' item='rid' open='(' separator=',' close=')'>#{rid}</foreach>" +
+            "</if>" +
+            "</script>")
+    List<String> selectRoleCodesByUserId(@Param("userId") Long userId, @Param("roleIds") List<Long> roleIds);
+
+    @Select("<script>" +
+            "SELECT r.user_type FROM sys_user_role ur " +
+            "INNER JOIN sys_role r ON ur.role_id = r.role_id " +
+            "WHERE ur.user_id = #{userId} AND r.is_deleted = 0 " +
+            "<if test='roleIds != null and roleIds.size() > 0'>" +
+            "AND ur.role_id IN <foreach collection='roleIds' item='rid' open='(' separator=',' close=')'>#{rid}</foreach>" +
+            "</if>" +
+            "</script>")
+    List<Integer> selectUserTypesByUserIdAndRoles(@Param("userId") Long userId, @Param("roleIds") List<Long> roleIds);
+
     @Select("SELECT COUNT(*) > 0 FROM sys_user_role ur " +
             "INNER JOIN sys_role r ON ur.role_id = r.role_id " +
             "WHERE ur.user_id = #{userId} AND r.role_code = 'ROLE_ADMIN' AND r.is_deleted = 0")

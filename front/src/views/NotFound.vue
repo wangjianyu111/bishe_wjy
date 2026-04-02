@@ -4,7 +4,7 @@
       <div class="not-found-code">404</div>
       <h2 class="not-found-title">页面不存在</h2>
       <p class="not-found-desc">抱歉，您访问的页面不存在或已被移除。</p>
-      <el-button type="primary" @click="goHome">返回首页</el-button>
+      <el-button type="primary" @click="goHome">返回</el-button>
     </div>
   </div>
 </template>

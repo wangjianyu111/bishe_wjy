@@ -120,8 +120,12 @@ public class UserServiceImpl implements UserService {
             sysUserMapper.deleteUserRoleByUserId(req.getUserId());
             if (!req.getRoleIds().isEmpty()) {
                 sysUserMapper.batchInsertUserRole(req.getUserId(), req.getRoleIds());
+                // 根据角色表中配置的 userType 自动更新用户的账号类型
+                List<Integer> roleUserTypes = sysUserMapper.selectUserTypesByUserIdAndRoles(req.getUserId(), req.getRoleIds());
+                user.setUserType(deriveUserTypeFromRoles(roleUserTypes));
             }
         }
+        sysUserMapper.updateById(user);
     }
 
     @Override
@@ -143,7 +147,33 @@ public class UserServiceImpl implements UserService {
         sysUserMapper.deleteUserRoleByUserId(req.getUserId());
         if (req.getRoleIds() != null && !req.getRoleIds().isEmpty()) {
             sysUserMapper.batchInsertUserRole(req.getUserId(), req.getRoleIds());
+            // 根据角色表中配置的 userType 自动更新用户的账号类型
+            List<Integer> roleUserTypes = sysUserMapper.selectUserTypesByUserIdAndRoles(req.getUserId(), req.getRoleIds());
+            Integer newUserType = deriveUserTypeFromRoles(roleUserTypes);
+            user.setUserType(newUserType);
+            sysUserMapper.updateById(user);
         }
+    }
+
+    private Integer deriveUserTypeFromRoles(List<Integer> roleUserTypes) {
+        if (roleUserTypes == null || roleUserTypes.isEmpty()) {
+            return 0; // 待分配
+        }
+        // 过滤掉 NULL，只保留有效的 userType
+        List<Integer> validTypes = roleUserTypes.stream()
+                .filter(t -> t != null)
+                .toList();
+        if (validTypes.isEmpty()) {
+            return 0; // 所有角色都没有配置 userType，视为待分配
+        }
+        // 优先级：管理员 > 教师 > 学生
+        if (validTypes.contains(3)) {
+            return 3;
+        }
+        if (validTypes.contains(2)) {
+            return 2;
+        }
+        return 1;
     }
 
     @Override

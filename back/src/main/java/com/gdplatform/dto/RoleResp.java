@@ -11,6 +11,7 @@ public class RoleResp {
     private Long roleId;
     private String roleName;
     private String roleCode;
+    private Integer userType;       // 该角色对应的账号类型
     private String remark;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

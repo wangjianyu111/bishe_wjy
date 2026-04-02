@@ -70,6 +70,7 @@ CREATE TABLE sys_role (
   role_id BIGINT PRIMARY KEY AUTO_INCREMENT,
   role_name VARCHAR(50) NOT NULL COMMENT '角色名称',
   role_code VARCHAR(50) NOT NULL COMMENT '角色编码',
+  user_type TINYINT DEFAULT NULL COMMENT '该角色对应的账号类型：1学生 2教师 3管理员（优先级取最高）',
   remark VARCHAR(255) DEFAULT NULL,
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -480,11 +481,11 @@ INSERT INTO sys_user (user_id, user_name, user_password, real_name, user_type, s
 (2, 'teacher1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '张教授', 2, NULL, 'T001', 1, NULL, '13800000001', 1),
 (3, 'student1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '李同学', 1, '2021001', NULL, 1, 1, '13800000002', 1);
 
-INSERT INTO sys_role (role_id, role_name, role_code, remark) VALUES
-(1, '管理员', 'ROLE_ADMIN', '系统管理'),
-(2, '指导教师', 'ROLE_TEACHER', '教师'),
-(3, '学生', 'ROLE_STUDENT', '学生'),
-(4, '待分配', 'ROLE_PENDING', '新注册未分配权限的用户');
+INSERT INTO sys_role (role_id, role_name, role_code, user_type, remark) VALUES
+(1, '管理员', 'ROLE_ADMIN', 3, '系统管理'),
+(2, '指导教师', 'ROLE_TEACHER', 2, '教师'),
+(3, '学生', 'ROLE_STUDENT', 1, '学生'),
+(4, '待分配', 'ROLE_PENDING', NULL, '新注册未分配权限的用户');
 
 INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1), (2, 2), (3, 3);
 

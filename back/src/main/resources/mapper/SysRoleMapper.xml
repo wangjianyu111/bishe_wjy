@@ -6,6 +6,7 @@
         SELECT role_id AS roleId,
                role_name AS roleName,
                role_code AS roleCode,
+               user_type AS userType,
                remark,
                create_time AS createTime,
                update_time AS updateTime
