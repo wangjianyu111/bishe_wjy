@@ -114,8 +114,8 @@ public class ProjectTopicController {
             dataStyle.setAlignment(HorizontalAlignment.CENTER);
             setBorder(dataStyle);
 
-            String[] headers = {"课题名称", "学年", "最大人数", "已选人数", "状态", "简介", "学校名称", "创建时间"};
-            int[] widths = {4000, 2000, 1500, 1500, 1500, 5000, 3000, 3000};
+            String[] headers = {"课题名称", "学校名称", "学年", "最大人数", "已选人数", "状态", "简介", "创建时间"};
+            int[] widths = {4000, 3000, 2000, 1500, 1500, 1500, 5000, 3000};
 
             // 写表头
             Row headerRow = sheet.createRow(0);
@@ -132,12 +132,12 @@ public class ProjectTopicController {
                 TopicResp topic = list.get(i);
                 Row row = sheet.createRow(i + 1);
                 row.createCell(0).setCellValue(topic.getTopicName() != null ? topic.getTopicName() : "");
-                row.createCell(1).setCellValue(topic.getAcademicYear() != null ? topic.getAcademicYear() : "");
-                row.createCell(2).setCellValue(topic.getMaxStudents() != null ? topic.getMaxStudents() : 0);
-                row.createCell(3).setCellValue(topic.getCurrentCount() != null ? topic.getCurrentCount() : 0);
-                row.createCell(4).setCellValue(statusLabel(topic.getStatus()));
-                row.createCell(5).setCellValue(topic.getDescription() != null ? topic.getDescription() : "");
-                row.createCell(6).setCellValue(topic.getCampusName() != null ? topic.getCampusName() : "");
+                row.createCell(1).setCellValue(topic.getCampusName() != null ? topic.getCampusName() : "");
+                row.createCell(2).setCellValue(topic.getAcademicYear() != null ? topic.getAcademicYear() : "");
+                row.createCell(3).setCellValue(topic.getMaxStudents() != null ? topic.getMaxStudents() : 0);
+                row.createCell(4).setCellValue(topic.getCurrentCount() != null ? topic.getCurrentCount() : 0);
+                row.createCell(5).setCellValue(statusLabel(topic.getStatus()));
+                row.createCell(6).setCellValue(topic.getDescription() != null ? topic.getDescription() : "");
                 row.createCell(7).setCellValue(topic.getCreateTime() != null ? topic.getCreateTime().format(fmt) : "");
                 for (int j = 0; j < 8; j++) {
                     row.getCell(j).setCellStyle(dataStyle);
