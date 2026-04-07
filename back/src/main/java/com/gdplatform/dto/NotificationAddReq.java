@@ -20,4 +20,6 @@ public class NotificationAddReq {
     private List<Long> receiverIds;
 
     private String bizType;
+
+    private Long bizId;
 }

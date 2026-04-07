@@ -72,3 +72,7 @@ export function approveSelection(data) {
 export function rejectSelection(data) {
   return http.put('/project/selections/reject', data)
 }
+
+export function fetchTeacherApprovals(params) {
+  return http.get('/project/selections/teacher-approvals', { params })
+}

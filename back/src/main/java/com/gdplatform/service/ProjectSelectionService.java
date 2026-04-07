@@ -36,4 +36,7 @@ public interface ProjectSelectionService {
 
     // 查询所有校区（带是否有题目库标记）
     List<CampusResp> listCampuses();
+
+    // 教师端：查询自己指导的学生选题申请
+    Page<SelectionResp> pageSelectionsForTeacher(SelectionPageReq req, long current, long size);
 }

@@ -113,6 +113,24 @@ public class ProjectSelectionController {
     }
 
     /**
+     * 教师端：查看自己指导的学生选题申请列表（审批管理）
+     */
+    @GetMapping("/teacher-approvals")
+    @PreAuthorize("hasAuthority('project:approval:pass') or hasAuthority('project:approval:reject')")
+    public R<Page<SelectionResp>> teacherApprovals(
+            @RequestParam(defaultValue = "1") long current,
+            @RequestParam(defaultValue = "10") long size,
+            @RequestParam(required = false) String academicYear,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword) {
+        SelectionPageReq req = new SelectionPageReq();
+        req.setAcademicYear(academicYear);
+        req.setStatus(status);
+        req.setKeyword(keyword);
+        return R.ok(selectionService.pageSelectionsForTeacher(req, current, size));
+    }
+
+    /**
      * 审批通过
      */
     @PutMapping("/approve")

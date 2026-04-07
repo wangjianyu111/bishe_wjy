@@ -15,4 +15,8 @@ public interface ProjectSelectionMapper extends BaseMapper<ProjectSelection> {
     List<SelectionResp> selectRespPage(@Param("req") SelectionPageReq req, @Param("offset") long offset, @Param("limit") long limit);
 
     long countRespPage(@Param("req") SelectionPageReq req);
+
+    List<SelectionResp> selectForTeacher(@Param("req") SelectionPageReq req, @Param("offset") long offset, @Param("limit") long limit);
+
+    long countForTeacher(@Param("req") SelectionPageReq req);
 }

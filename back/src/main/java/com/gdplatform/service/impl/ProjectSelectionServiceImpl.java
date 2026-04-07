@@ -13,6 +13,7 @@ import com.gdplatform.mapper.ProjectTopicMapper;
 import com.gdplatform.mapper.CampusMapper;
 import com.gdplatform.mapper.SysUserMapper;
 import com.gdplatform.service.ProjectSelectionService;
+import com.gdplatform.service.NotificationService;
 import com.gdplatform.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class ProjectSelectionServiceImpl implements ProjectSelectionService {
     private final ProjectTopicMapper topicMapper;
     private final SysUserMapper userMapper;
     private final CampusMapper campusMapper;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -124,6 +126,12 @@ public class ProjectSelectionServiceImpl implements ProjectSelectionService {
         if (sel.getTopicId() != null) {
             topicMapper.addCurrentCount(sel.getTopicId());
         }
+
+        // 发送通知给学生
+        String topicName = buildTopicName(sel);
+        String title = "选题申请通过通知";
+        String content = String.format("您的选题「%s」已通过教师审批，请注意后续安排。", topicName);
+        sendNotificationToStudent(sel.getStudentId(), title, content, "SELECTION", sel.getSelectionId());
     }
 
     @Override
@@ -139,6 +147,40 @@ public class ProjectSelectionServiceImpl implements ProjectSelectionService {
         sel.setStatus("REJECTED");
         sel.setRejectReason(req.getComment());
         selectionMapper.updateById(sel);
+
+        // 发送通知给学生
+        String topicName = buildTopicName(sel);
+        String title = "选题申请驳回通知";
+        String content = String.format("您的选题「%s」未通过审批。驳回原因：%s", topicName,
+                req.getComment() != null ? req.getComment() : "无");
+        sendNotificationToStudent(sel.getStudentId(), title, content, "SELECTION", sel.getSelectionId());
+    }
+
+    private void sendNotificationToStudent(Long studentId, String title, String content, String bizType, Long bizId) {
+        if (studentId == null) return;
+        try {
+            NotificationAddReq nr = new NotificationAddReq();
+            nr.setTitle(title);
+            nr.setContent(content);
+            nr.setNoticeType(2);
+            nr.setBizType(bizType);
+            nr.setBizId(bizId);
+            nr.setReceiverIds(List.of(studentId));
+            notificationService.add(nr, null);
+        } catch (Exception ignored) {
+            // 通知失败不影响主业务流程
+        }
+    }
+
+    private String buildTopicName(ProjectSelection sel) {
+        if (Boolean.TRUE.equals(sel.getIsCustomTopic())) {
+            return sel.getCustomTopicName() != null ? sel.getCustomTopicName() : "自拟课题";
+        }
+        if (sel.getTopicId() != null) {
+            ProjectTopic t = topicMapper.selectById(sel.getTopicId());
+            if (t != null) return t.getTopicName();
+        }
+        return "未知课题";
     }
 
     @Override
@@ -177,6 +219,18 @@ public class ProjectSelectionServiceImpl implements ProjectSelectionService {
     @Override
     public List<CampusResp> listCampuses() {
         return campusMapper.selectAllCampuses();
+    }
+
+    @Override
+    public Page<SelectionResp> pageSelectionsForTeacher(SelectionPageReq req, long current, long size) {
+        SysUser teacher = SecurityUtils.currentUser();
+        req.setTeacherId(teacher.getUserId());
+        Page<SelectionResp> page = new Page<>(current, size);
+        List<SelectionResp> records = selectionMapper.selectForTeacher(req, (current - 1) * size, size);
+        long total = selectionMapper.countForTeacher(req);
+        page.setRecords(records);
+        page.setTotal(total);
+        return page;
     }
 
     private SelectionResp buildResp(ProjectSelection sel) {

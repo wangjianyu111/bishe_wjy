@@ -73,6 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
             n.setReceiverId(receiverId);
             n.setIsRead(0);
             n.setBizType(req.getBizType());
+            n.setBizId(req.getBizId());
             sysNotificationMapper.insert(n);
         }
     }

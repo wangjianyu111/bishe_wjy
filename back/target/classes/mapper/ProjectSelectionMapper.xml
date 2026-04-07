@@ -106,4 +106,70 @@
         </if>
     </select>
 
+    <!-- 教师端：查询该教师指导的学生选题申请 -->
+    <select id="selectForTeacher" resultMap="SelectionRespMap">
+        SELECT
+            s.selection_id,
+            s.student_id,
+            stu.real_name AS student_name,
+            stu.student_no,
+            s.topic_id,
+            t.topic_name,
+            t.description AS topic_description,
+            s.teacher_id,
+            tea.real_name AS teacher_name,
+            tea.teacher_no,
+            s.campus_name,
+            s.academic_year,
+            s.status,
+            s.apply_reason,
+            s.reject_reason,
+            s.is_custom_topic,
+            s.custom_topic_name,
+            s.custom_topic_description,
+            s.create_time,
+            s.update_time
+        FROM project_selection s
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        LEFT JOIN sys_user tea ON s.teacher_id = tea.user_id AND tea.is_deleted = 0
+        WHERE s.is_deleted = 0
+          AND s.teacher_id = #{req.teacherId}
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND s.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+        ORDER BY s.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countForTeacher" resultType="long">
+        SELECT COUNT(s.selection_id)
+        FROM project_selection s
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        WHERE s.is_deleted = 0
+          AND s.teacher_id = #{req.teacherId}
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND s.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+    </select>
+
 </mapper>
