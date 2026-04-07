@@ -87,4 +87,37 @@
             </foreach>
         </if>
     </insert>
+
+    <select id="selectTeachersByCampus" resultType="com.gdplatform.dto.TeacherResp">
+        SELECT u.user_id AS userId,
+               u.real_name AS realName,
+               u.teacher_no AS teacherNo,
+               u.campus_id AS campusId,
+               c.campus_name AS campusName
+        FROM sys_user u
+        LEFT JOIN sys_campus c ON u.campus_id = c.campus_id AND c.is_deleted = 0
+        WHERE u.is_deleted = 0
+          AND u.user_type = 2
+          AND u.status = 1
+        <if test="campusId != null">
+            AND u.campus_id = #{campusId}
+        </if>
+        ORDER BY u.campus_id ASC, u.real_name ASC
+    </select>
+
+    <select id="selectTeachersByCampusName" resultType="com.gdplatform.dto.TeacherResp">
+        SELECT u.user_id AS userId,
+               u.real_name AS realName,
+               u.teacher_no AS teacherNo,
+               u.campus_id AS campusId,
+               u.campus_name AS campusName
+        FROM sys_user u
+        WHERE u.is_deleted = 0
+          AND u.user_type = 2
+          AND u.status = 1
+        <if test="campusName != null and campusName != ''">
+            AND u.campus_name LIKE CONCAT('%', #{campusName}, '%')
+        </if>
+        ORDER BY u.campus_name ASC, u.real_name ASC
+    </select>
 </mapper>

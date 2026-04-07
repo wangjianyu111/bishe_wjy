@@ -14,4 +14,6 @@ public interface CampusMapper extends BaseMapper<SysCampus> {
     List<CampusResp> selectCampusPage(@Param("keyword") String keyword, @Param("offset") long offset, @Param("limit") long limit);
 
     long countCampusPage(@Param("keyword") String keyword);
+
+    List<CampusResp> selectAllCampuses();
 }

@@ -87,4 +87,32 @@
         </if>
         ORDER BY t.topic_id DESC
     </select>
+
+    <select id="selectTopicBankByCampus" resultType="com.gdplatform.dto.TopicBankItemResp">
+        SELECT t.topic_id AS topicId,
+               t.topic_name AS topicName,
+               t.description,
+               t.teacher_id AS teacherId,
+               tea.real_name AS teacherName,
+               tea.teacher_no AS teacherNo,
+               t.max_students AS maxStudents,
+               t.current_count AS currentCount,
+               t.status,
+               t.academic_year AS academicYear,
+               t.create_time AS createTime
+        FROM project_topic t
+        LEFT JOIN sys_user tea ON t.teacher_id = tea.user_id AND tea.is_deleted = 0
+        WHERE t.is_deleted = 0
+          AND t.status = 'OPEN'
+        <if test="campusId != null">
+            AND t.campus_id = #{campusId}
+        </if>
+        <if test="teacherId != null">
+            AND t.teacher_id = #{teacherId}
+        </if>
+        <if test="academicYear != null and academicYear != ''">
+            AND t.academic_year = #{academicYear}
+        </if>
+        ORDER BY t.topic_id DESC
+    </select>
 </mapper>

@@ -26,4 +26,14 @@
             AND (campus_name LIKE CONCAT('%', #{keyword}, '%') OR campus_code LIKE CONCAT('%', #{keyword}, '%'))
         </if>
     </select>
+
+    <select id="selectAllCampuses" resultType="com.gdplatform.dto.CampusResp">
+        SELECT campus_id AS campusId,
+               campus_name AS campusName,
+               campus_code AS campusCode,
+               sort_order AS sortOrder
+        FROM sys_campus
+        WHERE is_deleted = 0
+        ORDER BY sort_order ASC, campus_id ASC
+    </select>
 </mapper>

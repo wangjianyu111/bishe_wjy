@@ -35,7 +35,40 @@ export function importTopic(formData) {
   })
 }
 
-// ---------- 选题 ----------
+// ---------- 选题申请 ----------
+export function fetchCampuses() {
+  return http.get('/project/selections/campuses')
+}
+
+export function fetchTeachers(params) {
+  return http.get('/project/selections/teachers', { params })
+}
+
+export function fetchTopicBank(params) {
+  return http.get('/project/selections/topic-bank', { params })
+}
+
 export function applySelection(data) {
   return http.post('/project/selections/apply', data)
+}
+
+export function fetchMySelection() {
+  return http.get('/project/selections/my')
+}
+
+export function withdrawSelection(selectionId) {
+  return http.put(`/project/selections/withdraw/${selectionId}`)
+}
+
+// ---------- 选题管理 ----------
+export function fetchSelectionPage(params) {
+  return http.get('/project/selections', { params })
+}
+
+export function approveSelection(data) {
+  return http.put('/project/selections/approve', data)
+}
+
+export function rejectSelection(data) {
+  return http.put('/project/selections/reject', data)
 }

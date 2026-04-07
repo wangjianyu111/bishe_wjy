@@ -59,6 +59,7 @@ CREATE TABLE sys_user (
   teacher_no VARCHAR(32) DEFAULT NULL COMMENT '工号',
   college_id BIGINT DEFAULT NULL,
   campus_id BIGINT DEFAULT NULL COMMENT '所属校区',
+  campus_name VARCHAR(100) DEFAULT NULL COMMENT '学校名称（冗余字段）',
   major_id BIGINT DEFAULT NULL COMMENT '学生所属专业',
   user_avatar VARCHAR(512) DEFAULT NULL,
   user_phone VARCHAR(20) DEFAULT NULL,
@@ -179,17 +180,24 @@ CREATE TABLE project_topic (
 CREATE TABLE project_selection (
   selection_id BIGINT PRIMARY KEY AUTO_INCREMENT,
   student_id BIGINT NOT NULL,
-  topic_id BIGINT NOT NULL,
+  topic_id BIGINT DEFAULT NULL COMMENT '来自题目库的课题ID，自填时为NULL',
+  campus_name VARCHAR(100) DEFAULT NULL COMMENT '申请学校名称',
+  teacher_id BIGINT DEFAULT NULL COMMENT '指导教师',
+  is_custom_topic TINYINT DEFAULT 0 COMMENT '是否自填课题 0否 1是',
+  custom_topic_name VARCHAR(255) DEFAULT NULL COMMENT '自填课题名称',
+  custom_topic_description TEXT DEFAULT NULL COMMENT '自填课题简介',
   academic_year VARCHAR(20) NOT NULL,
   status VARCHAR(30) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING待审 APPROVED通过 REJECTED驳回 WITHDRAWN撤回',
   apply_reason VARCHAR(500) DEFAULT NULL,
+  reject_reason VARCHAR(500) DEFAULT NULL COMMENT '驳回原因',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_deleted TINYINT DEFAULT 0,
   UNIQUE KEY uk_student_year (student_id, academic_year),
   KEY idx_sel_topic (topic_id),
-  CONSTRAINT fk_sel_student FOREIGN KEY (student_id) REFERENCES sys_user (user_id),
-  CONSTRAINT fk_sel_topic FOREIGN KEY (topic_id) REFERENCES project_topic (topic_id)
+  KEY idx_sel_teacher (teacher_id),
+  KEY idx_sel_status (status),
+  CONSTRAINT fk_sel_student FOREIGN KEY (student_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='选题申请';
 
 CREATE TABLE project_progress (

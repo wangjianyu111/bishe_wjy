@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.ProjectSelectionMapper">
+
+    <resultMap id="SelectionRespMap" type="com.gdplatform.dto.SelectionResp">
+        <id column="selection_id" property="selectionId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="topic_id" property="topicId"/>
+        <result column="topic_name" property="topicName"/>
+        <result column="topic_description" property="topicDescription"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="teacher_no" property="teacherNo"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="status" property="status"/>
+        <result column="apply_reason" property="applyReason"/>
+        <result column="reject_reason" property="rejectReason"/>
+        <result column="is_custom_topic" property="isCustomTopic"/>
+        <result column="custom_topic_name" property="customTopicName"/>
+        <result column="custom_topic_description" property="customTopicDescription"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectRespPage" resultMap="SelectionRespMap">
+        SELECT
+            s.selection_id,
+            s.student_id,
+            stu.real_name AS student_name,
+            stu.student_no,
+            s.topic_id,
+            t.topic_name,
+            t.description AS topic_description,
+            s.teacher_id,
+            tea.real_name AS teacher_name,
+            tea.teacher_no,
+            s.campus_name,
+            s.academic_year,
+            s.status,
+            s.apply_reason,
+            s.reject_reason,
+            s.is_custom_topic,
+            s.custom_topic_name,
+            s.custom_topic_description,
+            s.create_time,
+            s.update_time
+        FROM project_selection s
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        LEFT JOIN sys_user tea ON s.teacher_id = tea.user_id AND tea.is_deleted = 0
+        WHERE s.is_deleted = 0
+        <if test="req.campusName != null and req.campusName != ''">
+            AND s.campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        <if test="req.teacherId != null">
+            AND s.teacher_id = #{req.teacherId}
+        </if>
+        <if test="req.studentId != null">
+            AND s.student_id = #{req.studentId}
+        </if>
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND s.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+        ORDER BY s.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countRespPage" resultType="long">
+        SELECT COUNT(s.selection_id)
+        FROM project_selection s
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        WHERE s.is_deleted = 0
+        <if test="req.campusName != null and req.campusName != ''">
+            AND s.campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        <if test="req.teacherId != null">
+            AND s.teacher_id = #{req.teacherId}
+        </if>
+        <if test="req.studentId != null">
+            AND s.student_id = #{req.studentId}
+        </if>
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND s.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+    </select>
+
+</mapper>

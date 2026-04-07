@@ -12,4 +12,5 @@ public class CampusResp {
     private Integer sortOrder;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private Boolean hasTopicBank;
 }

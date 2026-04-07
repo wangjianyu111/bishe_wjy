@@ -16,9 +16,15 @@ public class ProjectSelection {
     private Long selectionId;
     private Long studentId;
     private Long topicId;
+    private String campusName;
+    private Long teacherId;
+    private Boolean isCustomTopic;
+    private String customTopicName;
+    private String customTopicDescription;
     private String academicYear;
     private String status;
     private String applyReason;
+    private String rejectReason;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     @TableField("is_deleted")

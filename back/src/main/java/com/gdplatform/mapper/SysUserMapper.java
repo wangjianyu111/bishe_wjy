@@ -1,6 +1,7 @@
 package com.gdplatform.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.gdplatform.dto.TeacherResp;
 import com.gdplatform.dto.UserResp;
 import com.gdplatform.entity.SysUser;
 import org.apache.ibatis.annotations.Insert;
@@ -12,6 +13,10 @@ import java.util.List;
 
 @Mapper
 public interface SysUserMapper extends BaseMapper<SysUser> {
+
+    List<TeacherResp> selectTeachersByCampus(@Param("campusId") Long campusId);
+
+    List<TeacherResp> selectTeachersByCampusName(@Param("campusName") String campusName);
 
     @Select("SELECT * FROM sys_user WHERE user_name = #{userName} AND status != 0 AND is_deleted = 0 LIMIT 1")
     SysUser selectActiveUserByUsername(@Param("userName") String userName);
