@@ -19,6 +19,7 @@ import com.gdplatform.security.LoginUser;
 import com.gdplatform.service.AuthService;
 import com.gdplatform.service.MailService;
 import com.gdplatform.service.PermissionService;
+import com.gdplatform.service.UserService;
 import com.gdplatform.util.VerificationCodeUtil;
 import com.gdplatform.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class AuthServiceImpl implements AuthService {
     private final SysUserMapper sysUserMapper;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final UserService userService;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -97,11 +99,16 @@ public class AuthServiceImpl implements AuthService {
         user.setUserPassword(passwordEncoder.encode(request.getPassword()));
         user.setRealName(request.getUsername());
         user.setUserEmail(request.getEmail());
-        user.setUserType(0); // 待分配，分配角色后自动同步
+        user.setUserType(0); // 先设为待分配
         user.setStatus(1);
 
         sysUserMapper.insert(user);
         sysUserMapper.batchInsertUserRole(user.getUserId(), List.of(4L)); // ROLE_PENDING
+
+        // 根据角色自动推导账号类型
+        user.setUserType(userService.deriveUserTypeFromRoles(
+                sysUserMapper.selectUserTypesByUserIdAndRoles(user.getUserId(), List.of(4L))));
+        sysUserMapper.updateById(user);
     }
     
     @Override
@@ -144,10 +151,15 @@ public class AuthServiceImpl implements AuthService {
             user.setUserPassword(passwordEncoder.encode("123456"));
             user.setRealName(request.getEmail().split("@")[0]);
             user.setUserEmail(request.getEmail());
-            user.setUserType(0); // 待分配，分配角色后自动同步
+            user.setUserType(0); // 先设为待分配
             user.setStatus(1);
             sysUserMapper.insert(user);
             sysUserMapper.batchInsertUserRole(user.getUserId(), List.of(4L)); // ROLE_PENDING
+
+            // 根据角色自动推导账号类型
+            user.setUserType(userService.deriveUserTypeFromRoles(
+                    sysUserMapper.selectUserTypesByUserIdAndRoles(user.getUserId(), List.of(4L))));
+            sysUserMapper.updateById(user);
         }
         
         // 生成JWT令牌

@@ -178,7 +178,8 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private Integer deriveUserTypeFromRoles(List<Integer> roleUserTypes) {
+    @Override
+    public Integer deriveUserTypeFromRoles(List<Integer> roleUserTypes) {
         if (roleUserTypes == null || roleUserTypes.isEmpty()) {
             return 0; // 待分配
         }

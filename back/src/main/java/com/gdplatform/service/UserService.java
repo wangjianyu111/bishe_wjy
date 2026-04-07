@@ -21,4 +21,6 @@ public interface UserService {
     void assignRoles(UserAssignRoleReq req);
 
     void toggleStatus(Long userId, Integer status);
+
+    Integer deriveUserTypeFromRoles(java.util.List<Integer> roleUserTypes);
 }
