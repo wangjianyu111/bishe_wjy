@@ -9,17 +9,30 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- 说明：密码字段存 BCrypt；业务主键统一 BIGINT；逻辑删除用 is_deleted
 -- ============================================================
 
--- ---------- 学院 / 专业（组织维度）----------
+-- ---------- 学院 / 专业 / 校区 ----------
 DROP TABLE IF EXISTS sys_major;
 DROP TABLE IF EXISTS sys_college;
+DROP TABLE IF EXISTS sys_campus;
+CREATE TABLE sys_campus (
+  campus_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '校区ID',
+  campus_name VARCHAR(100) NOT NULL COMMENT '校区名称',
+  campus_code VARCHAR(50) DEFAULT NULL COMMENT '校区编码',
+  sort_order INT DEFAULT 0,
+  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_deleted TINYINT DEFAULT 0 COMMENT '0正常 1删除'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='校区';
+
 CREATE TABLE sys_college (
   college_id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '学院ID',
+  campus_id BIGINT DEFAULT NULL COMMENT '所属校区',
   college_name VARCHAR(100) NOT NULL COMMENT '学院名称',
   college_code VARCHAR(50) DEFAULT NULL COMMENT '学院编码',
   sort_order INT DEFAULT 0,
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  is_deleted TINYINT DEFAULT 0 COMMENT '0正常 1删除'
+  is_deleted TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+  CONSTRAINT fk_college_campus FOREIGN KEY (campus_id) REFERENCES sys_campus (campus_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学院';
 
 CREATE TABLE sys_major (
@@ -45,6 +58,7 @@ CREATE TABLE sys_user (
   student_no VARCHAR(32) DEFAULT NULL COMMENT '学号',
   teacher_no VARCHAR(32) DEFAULT NULL COMMENT '工号',
   college_id BIGINT DEFAULT NULL,
+  campus_id BIGINT DEFAULT NULL COMMENT '所属校区',
   major_id BIGINT DEFAULT NULL COMMENT '学生所属专业',
   user_avatar VARCHAR(512) DEFAULT NULL,
   user_phone VARCHAR(20) DEFAULT NULL,
@@ -57,6 +71,7 @@ CREATE TABLE sys_user (
   KEY idx_student_no (student_no),
   KEY idx_teacher_no (teacher_no),
   CONSTRAINT fk_user_college FOREIGN KEY (college_id) REFERENCES sys_college (college_id),
+  CONSTRAINT fk_user_campus FOREIGN KEY (campus_id) REFERENCES sys_campus (campus_id),
   CONSTRAINT fk_user_major FOREIGN KEY (major_id) REFERENCES sys_major (major_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户';
 
@@ -472,14 +487,16 @@ CREATE TABLE sys_operation_log (
 -- 初始化数据
 -- ============================================================
 
-INSERT INTO sys_college (college_id, college_name, college_code) VALUES (1, '计算机学院', 'CS');
+INSERT INTO sys_campus (campus_id, campus_name, campus_code) VALUES (1, '校本部', 'MAIN');
+
+INSERT INTO sys_college (college_id, campus_id, college_name, college_code) VALUES (1, 1, '计算机学院', 'CS');
 INSERT INTO sys_major (major_id, college_id, major_name, major_code) VALUES (1, 1, '软件工程', 'SE');
 
 -- 密码均为 123456（BCrypt）
-INSERT INTO sys_user (user_id, user_name, user_password, real_name, user_type, student_no, teacher_no, college_id, major_id, user_phone, status) VALUES
-(1, 'admin', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '系统管理员', 3, NULL, NULL, NULL, NULL, '13800000000', 1),
-(2, 'teacher1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '张教授', 2, NULL, 'T001', 1, NULL, '13800000001', 1),
-(3, 'student1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '李同学', 1, '2021001', NULL, 1, 1, '13800000002', 1);
+INSERT INTO sys_user (user_id, user_name, user_password, real_name, user_type, student_no, teacher_no, college_id, campus_id, major_id, user_phone, status) VALUES
+(1, 'admin', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '系统管理员', 3, NULL, NULL, NULL, NULL, NULL, '13800000000', 1),
+(2, 'teacher1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '张教授', 2, NULL, NULL, 1, NULL, 1, '13800000001', 1),
+(3, 'student1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '李同学', 1, '2021001', NULL, NULL, NULL, 1, '13800000002', 1);
 
 INSERT INTO sys_role (role_id, role_name, role_code, user_type, remark) VALUES
 (1, '管理员', 'ROLE_ADMIN', 3, '系统管理'),

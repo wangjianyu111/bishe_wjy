@@ -16,9 +16,19 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     @Select("SELECT * FROM sys_user WHERE user_name = #{userName} AND status != 0 AND is_deleted = 0 LIMIT 1")
     SysUser selectActiveUserByUsername(@Param("userName") String userName);
 
-    List<UserResp> selectUserPage(@Param("keyword") String keyword, @Param("offset") long offset, @Param("limit") long limit);
+    List<UserResp> selectUserPage(
+            @Param("keyword") String keyword,
+            @Param("campusName") String campusName,
+            @Param("userType") Integer userType,
+            @Param("status") Integer status,
+            @Param("offset") long offset,
+            @Param("limit") long limit);
 
-    long countUserPage(@Param("keyword") String keyword);
+    long countUserPage(
+            @Param("keyword") String keyword,
+            @Param("campusName") String campusName,
+            @Param("userType") Integer userType,
+            @Param("status") Integer status);
 
     List<Long> selectRoleIdsByUserId(@Param("userId") Long userId);
 

@@ -22,8 +22,11 @@ public class SysUserController {
     public R<Page<UserResp>> page(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
-            @RequestParam(required = false) String keyword) {
-        return R.ok(userService.pageUsers(current, size, keyword));
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String campusName,
+            @RequestParam(required = false) Integer userType,
+            @RequestParam(required = false) Integer status) {
+        return R.ok(userService.pageUsers(current, size, keyword, campusName, userType, status));
     }
 
     @GetMapping("/{userId}")

@@ -12,6 +12,15 @@
       <el-form-item label="关键词">
         <el-input v-model="query.keyword" placeholder="用户名/姓名" clearable style="width: 200px" />
       </el-form-item>
+      <el-form-item label="学校">
+        <el-autocomplete
+          v-model="query.campusName"
+          :fetch-suggestions="queryCampusSuggestions"
+          placeholder="请输入学校名称"
+          clearable
+          style="width: 200px"
+        />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="handleSearch">查询</el-button>
         <el-button @click="handleReset">重置</el-button>
@@ -44,6 +53,7 @@
       </el-table-column>
       <el-table-column prop="studentNo" label="学号" width="120" />
       <el-table-column prop="teacherNo" label="工号" width="120" />
+      <el-table-column prop="campusName" label="学校" width="120" />
       <el-table-column prop="userPhone" label="手机" width="130" />
       <el-table-column prop="status" label="状态" width="80">
         <template #default="{ row }">
@@ -116,6 +126,16 @@
       <el-form-item label="工号" prop="teacherNo">
         <el-input v-model="form.teacherNo" placeholder="请输入工号" :disabled="teacherNoDisabled" />
       </el-form-item>
+      <el-form-item label="学校" prop="campusName">
+        <el-autocomplete
+          v-model="form.campusName"
+          :fetch-suggestions="queryCampusSuggestions"
+          placeholder="请输学校名称（可下拉选择）"
+          clearable
+          style="width: 100%"
+          @change="handleCampusChange"
+        />
+      </el-form-item>
       <el-form-item label="手机" prop="userPhone">
         <el-input v-model="form.userPhone" placeholder="请输入手机号" />
       </el-form-item>
@@ -172,6 +192,7 @@ import {
   assignUserRoles,
   toggleUserStatus,
   fetchRoleList,
+  fetchCampusList,
 } from '@/api/system'
 
 const router = useRouter()
@@ -181,12 +202,14 @@ const submitting = ref(false)
 const roleSubmitting = ref(false)
 const formRef = ref(null)
 const roleList = ref([])
+const campusList = ref([])
 
 // ---------- 分页查询 ----------
 const query = reactive({
   current: 1,
   size: 10,
   keyword: '',
+  campusName: '',
 })
 const table = reactive({ records: [], total: 0 })
 
@@ -200,6 +223,10 @@ const defaultForm = () => ({
   userType: null,
   studentNo: '',
   teacherNo: '',
+  campusId: null,
+  campusName: '',
+  collegeId: null,
+  majorId: null,
   userPhone: '',
   userEmail: '',
   status: 1,
@@ -223,6 +250,23 @@ watch(() => form.value.userType, (newType) => {
   if (newType === 1) form.value.teacherNo = ''
   if (newType === 2) form.value.studentNo = ''
 })
+
+function handleCampusChange() {
+  form.value.collegeId = null
+  form.value.majorId = null
+}
+
+function queryCampusSuggestions(queryString, cb) {
+  if (!queryString) {
+    cb(campusList.value.map(c => ({ value: c.campusName })))
+    return
+  }
+  const q = queryString.toLowerCase()
+  const results = campusList.value
+    .filter(c => c.campusName.toLowerCase().includes(q))
+    .map(c => ({ value: c.campusName }))
+  cb(results)
+}
 
 // ---------- 角色分配弹窗 ----------
 const roleDialog = reactive({ visible: false, userId: null, userName: '', selectedRoles: [] })
@@ -268,6 +312,12 @@ async function loadRoleList() {
   }
 }
 
+async function loadCampusList() {
+  if (campusList.value.length === 0) {
+    campusList.value = await fetchCampusList()
+  }
+}
+
 // ---------- 搜索 ----------
 function handleSearch() {
   query.current = 1
@@ -275,22 +325,16 @@ function handleSearch() {
 }
 function handleReset() {
   query.keyword = ''
+  query.campusName = ''
   query.current = 1
   load()
-}
-
-// ---------- 新增 ----------
-function openAdd() {
-  form.value = defaultForm()
-  dialog.title = '新增用户'
-  dialog.isEdit = false
-  dialog.visible = true
 }
 
 // ---------- 编辑 ----------
 async function openEdit(row) {
   dialog.title = '编辑用户'
   dialog.isEdit = true
+  await loadCampusList()
   try {
     const data = await fetchUserById(row.userId)
     form.value = {
@@ -301,6 +345,10 @@ async function openEdit(row) {
       userType: data.userType,
       studentNo: data.studentNo || '',
       teacherNo: data.teacherNo || '',
+      campusId: data.campusId || null,
+      campusName: data.campusName || '',
+      collegeId: data.collegeId || null,
+      majorId: data.majorId || null,
       userPhone: data.userPhone || '',
       userEmail: data.userEmail || '',
       status: data.status,
@@ -310,6 +358,15 @@ async function openEdit(row) {
     ElMessage.error('加载用户信息失败')
     return
   }
+  dialog.visible = true
+}
+
+// ---------- 新增 ----------
+function openAdd() {
+  form.value = defaultForm()
+  dialog.title = '新增用户'
+  dialog.isEdit = false
+  loadCampusList()
   dialog.visible = true
 }
 
@@ -400,7 +457,10 @@ async function handleAssignRoleSubmit() {
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  await loadCampusList()
+  load()
+})
 </script>
 
 <style scoped>

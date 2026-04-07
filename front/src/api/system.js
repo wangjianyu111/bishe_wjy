@@ -62,6 +62,11 @@ export function assignRolePermissions(data) {
   return http.post('/system/roles/assign-permissions', data)
 }
 
+// ---------- 校区 ----------
+export function fetchCampusList() {
+  return http.get('/system/campuses')
+}
+
 // ---------- 权限 ----------
 export function fetchPermissionPage(params) {
   return http.get('/system/permissions/page', { params })
@@ -73,6 +78,10 @@ export function fetchPermissionTree() {
 
 export function fetchPermissionList() {
   return http.get('/system/permissions/list')
+}
+
+export function fetchUserList(params) {
+  return http.get('/system/users/page', { params })
 }
 
 export function addPermission(data) {

@@ -15,6 +15,8 @@ public class UserResp {
     private String teacherNo;
     private Long collegeId;
     private Long majorId;
+    private Long campusId;
+    private String campusName;
     private String userAvatar;
     private String userPhone;
     private String userEmail;

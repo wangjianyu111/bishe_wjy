@@ -19,6 +19,10 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (res) => {
     const body = res.data
+    // blob / arraybuffer 时 body 为二进制，没有 .data，不能走统一 R 包装解析
+    if (res.config.responseType === 'blob' || res.config.responseType === 'arraybuffer') {
+      return body
+    }
     if (body && typeof body.code === 'number' && body.code !== 0) {
       ElMessage.error(body.message || '请求失败')
       return Promise.reject(body)

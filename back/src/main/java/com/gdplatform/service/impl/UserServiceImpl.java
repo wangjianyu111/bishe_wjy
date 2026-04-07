@@ -6,8 +6,11 @@ import com.gdplatform.dto.UserAddReq;
 import com.gdplatform.dto.UserAssignRoleReq;
 import com.gdplatform.dto.UserResp;
 import com.gdplatform.dto.UserUpdateReq;
+import com.gdplatform.entity.SysCampus;
 import com.gdplatform.entity.SysUser;
+import com.gdplatform.mapper.CampusMapper;
 import com.gdplatform.mapper.SysUserMapper;
+import com.gdplatform.service.CampusService;
 import com.gdplatform.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,14 +24,16 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final SysUserMapper sysUserMapper;
+    private final CampusMapper campusMapper;
+    private final CampusService campusService;
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public Page<UserResp> pageUsers(long current, long size, String keyword) {
+    public Page<UserResp> pageUsers(long current, long size, String keyword, String campusName, Integer userType, Integer status) {
         Page<UserResp> page = new Page<>(current, size);
         long offset = (current - 1) * size;
-        List<UserResp> records = sysUserMapper.selectUserPage(keyword, offset, size);
-        long total = sysUserMapper.countUserPage(keyword);
+        List<UserResp> records = sysUserMapper.selectUserPage(keyword, campusName, userType, status, offset, size);
+        long total = sysUserMapper.countUserPage(keyword, campusName, userType, status);
 
         for (UserResp resp : records) {
             resp.setRoleIds(sysUserMapper.selectRoleIdsByUserId(resp.getUserId()));
@@ -46,7 +51,14 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BizException("用户不存在");
         }
-        return toResp(user);
+        UserResp resp = toResp(user);
+        if (user.getCampusId() != null) {
+            SysCampus campus = campusMapper.selectById(user.getCampusId());
+            if (campus != null) {
+                resp.setCampusName(campus.getCampusName());
+            }
+        }
+        return resp;
     }
 
     @Override
@@ -65,6 +77,11 @@ public class UserServiceImpl implements UserService {
         user.setTeacherNo(req.getTeacherNo());
         user.setCollegeId(req.getCollegeId());
         user.setMajorId(req.getMajorId());
+        if (req.getCampusName() != null && !req.getCampusName().isBlank()) {
+            user.setCampusId(campusService.findOrCreateByName(req.getCampusName()));
+        } else if (req.getCampusId() != null) {
+            user.setCampusId(req.getCampusId());
+        }
         user.setUserPhone(req.getUserPhone());
         user.setUserEmail(req.getUserEmail());
         user.setStatus(req.getStatus() != null ? req.getStatus() : 1);
@@ -104,6 +121,12 @@ public class UserServiceImpl implements UserService {
         }
         if (req.getMajorId() != null) {
             user.setMajorId(req.getMajorId());
+        }
+        if (req.getCampusId() != null) {
+            user.setCampusId(req.getCampusId());
+        }
+        if (req.getCampusName() != null && !req.getCampusName().isBlank()) {
+            user.setCampusId(campusService.findOrCreateByName(req.getCampusName()));
         }
         if (req.getUserPhone() != null) {
             user.setUserPhone(req.getUserPhone());
@@ -202,6 +225,8 @@ public class UserServiceImpl implements UserService {
         resp.setTeacherNo(user.getTeacherNo());
         resp.setCollegeId(user.getCollegeId());
         resp.setMajorId(user.getMajorId());
+        resp.setCampusId(user.getCampusId());
+        resp.setCampusName(null); // 由 Mapper XML JOIN 查出，单独查单条时通过 college 间接获取
         resp.setUserAvatar(user.getUserAvatar());
         resp.setUserPhone(user.getUserPhone());
         resp.setUserEmail(user.getUserEmail());

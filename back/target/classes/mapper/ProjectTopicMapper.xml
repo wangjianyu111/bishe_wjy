@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.ProjectTopicMapper">
+
+    <select id="selectTopicPage" resultType="com.gdplatform.dto.TopicResp">
+        SELECT t.topic_id AS topicId,
+               t.topic_name AS topicName,
+               t.teacher_id AS teacherId,
+               u.real_name AS teacherName,
+               t.academic_year AS academicYear,
+               t.max_students AS maxStudents,
+               t.current_count AS currentCount,
+               t.status,
+               t.description,
+               t.create_time AS createTime,
+               t.update_time AS updateTime
+        FROM project_topic t
+        LEFT JOIN sys_user u ON t.teacher_id = u.user_id
+        WHERE t.is_deleted = 0
+        <if test="academicYear != null and academicYear != ''">
+            AND t.academic_year = #{academicYear}
+        </if>
+        <if test="status != null and status != ''">
+            AND t.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND t.topic_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY t.topic_id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countTopicPage" resultType="long">
+        SELECT COUNT(*)
+        FROM project_topic t
+        WHERE t.is_deleted = 0
+        <if test="academicYear != null and academicYear != ''">
+            AND t.academic_year = #{academicYear}
+        </if>
+        <if test="status != null and status != ''">
+            AND t.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND t.topic_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="selectAllForExport" resultType="com.gdplatform.dto.TopicResp">
+        SELECT t.topic_id AS topicId,
+               t.topic_name AS topicName,
+               t.teacher_id AS teacherId,
+               u.real_name AS teacherName,
+               t.academic_year AS academicYear,
+               t.max_students AS maxStudents,
+               t.current_count AS currentCount,
+               t.status,
+               t.description,
+               t.create_time AS createTime,
+               t.update_time AS updateTime
+        FROM project_topic t
+        LEFT JOIN sys_user u ON t.teacher_id = u.user_id
+        WHERE t.is_deleted = 0
+        <if test="academicYear != null and academicYear != ''">
+            AND t.academic_year = #{academicYear}
+        </if>
+        <if test="status != null and status != ''">
+            AND t.status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND t.topic_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY t.topic_id DESC
+    </select>
+</mapper>

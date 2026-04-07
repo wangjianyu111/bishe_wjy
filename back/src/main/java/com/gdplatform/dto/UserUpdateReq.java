@@ -16,6 +16,8 @@ public class UserUpdateReq {
     private String teacherNo;
     private Long collegeId;
     private Long majorId;
+    private Long campusId;
+    private String campusName;
     private String userPhone;
     private String userEmail;
     private Integer status;

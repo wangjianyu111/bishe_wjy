@@ -11,6 +11,8 @@
                u.teacher_no AS teacherNo,
                u.college_id AS collegeId,
                u.major_id AS majorId,
+               u.campus_id AS campusId,
+               c.campus_name AS campusName,
                u.user_avatar AS userAvatar,
                u.user_phone AS userPhone,
                u.user_email AS userEmail,
@@ -21,10 +23,20 @@
         FROM sys_user u
         LEFT JOIN sys_user_role ur ON u.user_id = ur.user_id
         LEFT JOIN sys_role r ON ur.role_id = r.role_id
+        LEFT JOIN sys_campus c ON u.campus_id = c.campus_id
         WHERE u.is_deleted = 0
         <if test="keyword != null and keyword != ''">
             AND (u.user_name LIKE CONCAT('%', #{keyword}, '%')
                  OR u.real_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="campusName != null and campusName != ''">
+            AND c.campus_name LIKE CONCAT('%', #{campusName}, '%')
+        </if>
+        <if test="userType != null">
+            AND u.user_type = #{userType}
+        </if>
+        <if test="status != null">
+            AND u.status = #{status}
         </if>
         GROUP BY u.user_id
         ORDER BY u.user_id ASC
@@ -32,12 +44,22 @@
     </select>
 
     <select id="countUserPage" resultType="long">
-        SELECT COUNT(*)
-        FROM sys_user
-        WHERE is_deleted = 0
+        SELECT COUNT(DISTINCT u.user_id)
+        FROM sys_user u
+        LEFT JOIN sys_campus c ON u.campus_id = c.campus_id
+        WHERE u.is_deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND (user_name LIKE CONCAT('%', #{keyword}, '%')
-                 OR real_name LIKE CONCAT('%', #{keyword}, '%'))
+            AND (u.user_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR u.real_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="campusName != null and campusName != ''">
+            AND c.campus_name LIKE CONCAT('%', #{campusName}, '%')
+        </if>
+        <if test="userType != null">
+            AND u.user_type = #{userType}
+        </if>
+        <if test="status != null">
+            AND u.status = #{status}
         </if>
     </select>
 

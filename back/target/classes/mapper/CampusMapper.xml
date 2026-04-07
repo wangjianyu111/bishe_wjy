@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.CampusMapper">
+
+    <select id="selectCampusPage" resultType="com.gdplatform.dto.CampusResp">
+        SELECT campus_id     AS campusId,
+               campus_name   AS campusName,
+               campus_code   AS campusCode,
+               sort_order    AS sortOrder,
+               create_time   AS createTime,
+               update_time   AS updateTime
+        FROM sys_campus
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (campus_name LIKE CONCAT('%', #{keyword}, '%') OR campus_code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY sort_order ASC, campus_id ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countCampusPage" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_campus
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (campus_name LIKE CONCAT('%', #{keyword}, '%') OR campus_code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+</mapper>

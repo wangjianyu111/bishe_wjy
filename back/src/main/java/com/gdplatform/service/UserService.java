@@ -8,7 +8,7 @@ import com.gdplatform.dto.UserUpdateReq;
 
 public interface UserService {
 
-    Page<UserResp> pageUsers(long current, long size, String keyword);
+    Page<UserResp> pageUsers(long current, long size, String keyword, String campusName, Integer userType, Integer status);
 
     UserResp getById(Long userId);
 
