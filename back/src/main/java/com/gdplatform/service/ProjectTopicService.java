@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface ProjectTopicService {
 
-    Page<TopicResp> pageTopics(long current, long size, String academicYear, String status, String keyword);
+    Page<TopicResp> pageTopics(long current, long size, Long campusId, String campusName, String academicYear, String status, String keyword);
 
     TopicResp getById(Long topicId);
 
@@ -22,7 +22,7 @@ public interface ProjectTopicService {
 
     void toggleStatus(Long topicId);
 
-    List<TopicResp> export(String academicYear, String status, String keyword);
+    List<TopicResp> export(Long campusId, String campusName, String academicYear, String status, String keyword);
 
     void importTopics(MultipartFile file);
 }

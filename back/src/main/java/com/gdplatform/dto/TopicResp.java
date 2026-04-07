@@ -13,6 +13,7 @@ public class TopicResp {
     private Integer currentCount;
     private String status;
     private String description;
+    private Long campusId;
+    private String campusName;
     private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 }

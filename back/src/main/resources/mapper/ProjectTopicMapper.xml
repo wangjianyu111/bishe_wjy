@@ -10,10 +10,18 @@
                t.current_count AS currentCount,
                t.status,
                t.description,
+               t.campus_id AS campusId,
+               t.campus_name AS campusName,
                t.create_time AS createTime,
                t.update_time AS updateTime
         FROM project_topic t
         WHERE t.is_deleted = 0
+        <if test="campusId != null">
+            AND t.campus_id = #{campusId}
+        </if>
+        <if test="campusId == null and campusName != null and campusName != ''">
+            AND t.campus_name LIKE CONCAT('%', #{campusName}, '%')
+        </if>
         <if test="academicYear != null and academicYear != ''">
             AND t.academic_year = #{academicYear}
         </if>
@@ -31,6 +39,12 @@
         SELECT COUNT(*)
         FROM project_topic t
         WHERE t.is_deleted = 0
+        <if test="campusId != null">
+            AND t.campus_id = #{campusId}
+        </if>
+        <if test="campusId == null and campusName != null and campusName != ''">
+            AND t.campus_name LIKE CONCAT('%', #{campusName}, '%')
+        </if>
         <if test="academicYear != null and academicYear != ''">
             AND t.academic_year = #{academicYear}
         </if>
@@ -50,10 +64,18 @@
                t.current_count AS currentCount,
                t.status,
                t.description,
+               t.campus_id AS campusId,
+               t.campus_name AS campusName,
                t.create_time AS createTime,
                t.update_time AS updateTime
         FROM project_topic t
         WHERE t.is_deleted = 0
+        <if test="campusId != null">
+            AND t.campus_id = #{campusId}
+        </if>
+        <if test="campusId == null and campusName != null and campusName != ''">
+            AND t.campus_name LIKE CONCAT('%', #{campusName}, '%')
+        </if>
         <if test="academicYear != null and academicYear != ''">
             AND t.academic_year = #{academicYear}
         </if>

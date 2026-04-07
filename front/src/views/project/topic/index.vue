@@ -26,6 +26,22 @@
 
     <!-- 搜索栏 -->
     <el-form :inline="true" class="filter">
+      <el-form-item label="学校名称">
+        <el-autocomplete
+          v-model="query.campusName"
+          :fetch-suggestions="queryCampusSuggestions"
+          placeholder="输入或选择学校"
+          :trigger-on-focus="false"
+          clearable
+          style="width: 180px"
+          @select="handleCampusSelect"
+          @change="handleCampusChange"
+        >
+          <template #prefix>
+            <el-icon><School /></el-icon>
+          </template>
+        </el-autocomplete>
+      </el-form-item>
       <el-form-item label="学年">
         <el-input v-model="query.academicYear" placeholder="如 2024-2025" clearable style="width: 160px" />
       </el-form-item>
@@ -36,7 +52,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="关键词">
-        <el-input v-model="query.keyword" placeholder="课题名称" clearable style="width: 180px" />
+        <el-input v-model="query.keyword" placeholder="毕设题目" clearable style="width: 180px" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -47,7 +63,8 @@
     <!-- 表格 -->
     <el-table :data="table.records" v-loading="loading" border stripe>
       <el-table-column prop="topicId" label="ID" width="70" />
-      <el-table-column prop="topicName" label="课题名称" min-width="200" show-overflow-tooltip />
+      <el-table-column prop="topicName" label="毕设题目" min-width="200" show-overflow-tooltip />
+      <el-table-column prop="campusName" label="学校名称" width="120" />
       <el-table-column prop="academicYear" label="学年" width="110" />
       <el-table-column label="名额" width="80" align="center">
         <template #default="{ row }">
@@ -101,8 +118,11 @@
   <!-- 新增/编辑弹窗 -->
   <el-dialog v-model="dialog.visible" :title="dialog.title" width="560px" destroy-on-close>
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100">
-      <el-form-item label="课题名称" prop="topicName">
-        <el-input v-model="form.topicName" placeholder="请输入课题名称" maxlength="200" show-word-limit />
+      <el-form-item label="毕设题目" prop="topicName">
+        <el-input v-model="form.topicName" placeholder="请输入毕设题目" maxlength="200" show-word-limit />
+      </el-form-item>
+      <el-form-item label="学校名称" prop="campusName">
+        <el-input v-model="form.campusName" placeholder="请输入学校名称" maxlength="100" clearable />
       </el-form-item>
       <el-form-item label="学年" prop="academicYear">
         <el-input v-model="form.academicYear" placeholder="如 2024-2025" maxlength="20" style="width: 100%" />
@@ -142,7 +162,8 @@ import {
   exportTopic,
   importTopic,
 } from '@/api/project'
-import { Download, Upload, Plus } from '@element-plus/icons-vue'
+import { listCampus } from '@/api/campus'
+import { Download, Upload, Plus, School } from '@element-plus/icons-vue'
 
 const store = useUserStore()
 const loading = ref(false)
@@ -150,10 +171,13 @@ const submitting = ref(false)
 const importing = ref(false)
 const formRef = ref(null)
 const importInputRef = ref(null)
+const campusOptions = ref([])
 
 const query = reactive({
   current: 1,
   size: 10,
+  campusId: null,
+  campusName: '',
   academicYear: '',
   status: '',
   keyword: '',
@@ -165,6 +189,7 @@ const dialog = reactive({ visible: false, title: '新增课题', isEdit: false }
 const form = ref({})
 const defaultForm = () => ({
   topicName: '',
+  campusName: '',
   academicYear: '',
   maxStudents: 1,
   description: '',
@@ -172,7 +197,7 @@ const defaultForm = () => ({
 form.value = defaultForm()
 
 const rules = {
-  topicName: [{ required: true, message: '请输入课题名称', trigger: 'blur' }],
+  topicName: [{ required: true, message: '请输入毕设题目', trigger: 'blur' }],
   academicYear: [{ required: true, message: '请输入学年', trigger: 'blur' }],
   maxStudents: [{ required: true, message: '请输入可选人数', trigger: 'blur' }],
 }
@@ -217,11 +242,34 @@ function handleSearch() {
 }
 
 function handleReset() {
+  query.campusId = null
+  query.campusName = ''
   query.academicYear = ''
   query.status = ''
   query.keyword = ''
   query.current = 1
   load()
+}
+
+function queryCampusSuggestions(keyword, callback) {
+  if (!keyword) {
+    callback(campusOptions.value.map(c => ({ value: c.campusName, campusId: c.campusId })))
+    return
+  }
+  const filtered = campusOptions.value.filter(c =>
+    c.campusName.toLowerCase().includes(keyword.toLowerCase())
+  )
+  callback(filtered.map(c => ({ value: c.campusName, campusId: c.campusId })))
+}
+
+function handleCampusSelect(item) {
+  query.campusId = item.campusId
+}
+
+function handleCampusChange(val) {
+  if (!val) {
+    query.campusId = null
+  }
 }
 
 // ---------- 新增 ----------
@@ -241,6 +289,7 @@ async function openEdit(row) {
     form.value = {
       topicId: data.topicId,
       topicName: data.topicName,
+      campusName: data.campusName || '',
       academicYear: data.academicYear,
       maxStudents: data.maxStudents,
       description: data.description || '',
@@ -349,9 +398,19 @@ async function handleImportFileChange(e) {
   }
 }
 
+async function loadCampusOptions() {
+  try {
+    const data = await listCampus()
+    campusOptions.value = data || []
+  } catch {
+    // ignore
+  }
+}
+
 // ---------- init ----------
 onMounted(() => {
   load()
+  loadCampusOptions()
 })
 </script>
 

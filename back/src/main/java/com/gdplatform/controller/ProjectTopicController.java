@@ -33,10 +33,12 @@ public class ProjectTopicController {
     public R<Page<TopicResp>> page(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
+            @RequestParam(required = false) Long campusId,
+            @RequestParam(required = false) String campusName,
             @RequestParam(required = false) String academicYear,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword) {
-        return R.ok(projectTopicService.pageTopics(current, size, academicYear, status, keyword));
+        return R.ok(projectTopicService.pageTopics(current, size, campusId, campusName, academicYear, status, keyword));
     }
 
     @GetMapping("/{topicId}")
@@ -76,11 +78,13 @@ public class ProjectTopicController {
     @GetMapping("/export")
     @PreAuthorize("hasAuthority('project:topic:list')")
     public void export(
+            @RequestParam(required = false) Long campusId,
+            @RequestParam(required = false) String campusName,
             @RequestParam(required = false) String academicYear,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
             HttpServletResponse response) throws IOException {
-        List<TopicResp> list = projectTopicService.export(academicYear, status, keyword);
+        List<TopicResp> list = projectTopicService.export(campusId, campusName, academicYear, status, keyword);
         exportExcel(list, response);
     }
 
@@ -110,8 +114,8 @@ public class ProjectTopicController {
             dataStyle.setAlignment(HorizontalAlignment.CENTER);
             setBorder(dataStyle);
 
-            String[] headers = {"课题名称", "学年", "最大人数", "已选人数", "状态", "简介", "创建时间"};
-            int[] widths = {4000, 2000, 1500, 1500, 1500, 5000, 3000};
+            String[] headers = {"课题名称", "学年", "最大人数", "已选人数", "状态", "简介", "学校名称", "创建时间"};
+            int[] widths = {4000, 2000, 1500, 1500, 1500, 5000, 3000, 3000};
 
             // 写表头
             Row headerRow = sheet.createRow(0);
@@ -133,8 +137,9 @@ public class ProjectTopicController {
                 row.createCell(3).setCellValue(topic.getCurrentCount() != null ? topic.getCurrentCount() : 0);
                 row.createCell(4).setCellValue(statusLabel(topic.getStatus()));
                 row.createCell(5).setCellValue(topic.getDescription() != null ? topic.getDescription() : "");
-                row.createCell(6).setCellValue(topic.getCreateTime() != null ? topic.getCreateTime().format(fmt) : "");
-                for (int j = 0; j < 7; j++) {
+                row.createCell(6).setCellValue(topic.getCampusName() != null ? topic.getCampusName() : "");
+                row.createCell(7).setCellValue(topic.getCreateTime() != null ? topic.getCreateTime().format(fmt) : "");
+                for (int j = 0; j < 8; j++) {
                     row.getCell(j).setCellStyle(dataStyle);
                 }
             }

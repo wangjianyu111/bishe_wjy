@@ -21,4 +21,5 @@ public class TopicUpdateReq {
     private Integer maxStudents;
 
     private String description;
+    private String campusName;
 }

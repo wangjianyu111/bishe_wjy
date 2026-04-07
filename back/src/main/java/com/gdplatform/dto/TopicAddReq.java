@@ -18,4 +18,5 @@ public class TopicAddReq {
     private Integer maxStudents;
 
     private String description;
+    private String campusName;
 }

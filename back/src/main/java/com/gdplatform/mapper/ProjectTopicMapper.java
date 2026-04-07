@@ -12,6 +12,8 @@ import java.util.List;
 public interface ProjectTopicMapper extends BaseMapper<ProjectTopic> {
 
     List<TopicResp> selectTopicPage(
+            @Param("campusId") Long campusId,
+            @Param("campusName") String campusName,
             @Param("academicYear") String academicYear,
             @Param("status") String status,
             @Param("keyword") String keyword,
@@ -19,11 +21,15 @@ public interface ProjectTopicMapper extends BaseMapper<ProjectTopic> {
             @Param("limit") long limit);
 
     long countTopicPage(
+            @Param("campusId") Long campusId,
+            @Param("campusName") String campusName,
             @Param("academicYear") String academicYear,
             @Param("status") String status,
             @Param("keyword") String keyword);
 
     List<TopicResp> selectAllForExport(
+            @Param("campusId") Long campusId,
+            @Param("campusName") String campusName,
             @Param("academicYear") String academicYear,
             @Param("status") String status,
             @Param("keyword") String keyword);

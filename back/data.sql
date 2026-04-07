@@ -166,11 +166,14 @@ CREATE TABLE project_topic (
   current_count INT NOT NULL DEFAULT 0 COMMENT '已确认人数',
   status VARCHAR(20) NOT NULL DEFAULT 'OPEN' COMMENT 'OPEN已发布 CLOSED关闭 DRAFT草稿',
   description TEXT,
+  campus_id BIGINT DEFAULT NULL COMMENT '所属校区',
+  campus_name VARCHAR(100) DEFAULT NULL COMMENT '学校名称',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_deleted TINYINT DEFAULT 0,
   KEY idx_topic_teacher (teacher_id),
-  KEY idx_topic_year (academic_year)
+  KEY idx_topic_year (academic_year),
+  KEY idx_topic_campus (campus_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='毕业设计课题';
 
 CREATE TABLE project_selection (
@@ -641,7 +644,7 @@ INSERT INTO sys_config (config_key, config_value, remark) VALUES
 ('system.name', '大学生毕业设计审批一体化平台', '系统名称'),
 ('file.upload.path', './uploads', '本地上传目录');
 
-INSERT INTO project_topic (topic_id, topic_name, teacher_id, academic_year, max_students, current_count, status, description) VALUES
-(1, '基于SpringBoot的毕设管理系统设计与实现', 2, '2024-2025', 1, 0, 'OPEN', 'Web全栈');
+INSERT INTO project_topic (topic_id, topic_name, teacher_id, academic_year, max_students, current_count, status, description, campus_id, campus_name) VALUES
+(1, '基于SpringBoot的毕设管理系统设计与实现', 2, '2024-2025', 1, 0, 'OPEN', 'Web全栈', 1, '广州大学城校区');
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -43,11 +43,11 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
     private String uploadPath;
 
     @Override
-    public Page<TopicResp> pageTopics(long current, long size, String academicYear, String status, String keyword) {
+    public Page<TopicResp> pageTopics(long current, long size, Long campusId, String campusName, String academicYear, String status, String keyword) {
         Page<TopicResp> page = new Page<>(current, size);
         long offset = (current - 1) * size;
-        List<TopicResp> records = projectTopicMapper.selectTopicPage(academicYear, status, keyword, offset, size);
-        long total = projectTopicMapper.countTopicPage(academicYear, status, keyword);
+        List<TopicResp> records = projectTopicMapper.selectTopicPage(campusId, campusName, academicYear, status, keyword, offset, size);
+        long total = projectTopicMapper.countTopicPage(campusId, campusName, academicYear, status, keyword);
         page.setRecords(records);
         page.setTotal(total);
         return page;
@@ -55,11 +55,12 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
 
     @Override
     public TopicResp getById(Long topicId) {
-        ProjectTopic topic = projectTopicMapper.selectById(topicId);
-        if (topic == null) {
-            throw new BizException("课题不存在");
-        }
-        return toResp(topic);
+        List<TopicResp> list = projectTopicMapper.selectAllForExport(null, null, null, null, null);
+        TopicResp topic = list.stream()
+                .filter(t -> t.getTopicId().equals(topicId))
+                .findFirst()
+                .orElseThrow(() -> new BizException("课题不存在"));
+        return topic;
     }
 
     @Override
@@ -73,6 +74,7 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
         topic.setAcademicYear(req.getAcademicYear());
         topic.setMaxStudents(req.getMaxStudents());
         topic.setDescription(req.getDescription());
+        topic.setCampusName(req.getCampusName());
         topic.setCurrentCount(0);
         topic.setStatus("OPEN");
         projectTopicMapper.insert(topic);
@@ -91,6 +93,7 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
         topic.setAcademicYear(req.getAcademicYear());
         topic.setMaxStudents(req.getMaxStudents());
         topic.setDescription(req.getDescription());
+        topic.setCampusName(req.getCampusName());
         projectTopicMapper.updateById(topic);
     }
 
@@ -117,8 +120,8 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
     }
 
     @Override
-    public List<TopicResp> export(String academicYear, String status, String keyword) {
-        return projectTopicMapper.selectAllForExport(academicYear, status, keyword);
+    public List<TopicResp> export(Long campusId, String campusName, String academicYear, String status, String keyword) {
+        return projectTopicMapper.selectAllForExport(campusId, campusName, academicYear, status, keyword);
     }
 
     @Override
@@ -184,6 +187,7 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
                     String academicYear = getCellString(row.getCell(2));
                     String maxStudentsStr = getCellString(row.getCell(3));
                     String description = getCellString(row.getCell(4));
+                    String schoolName = getCellString(row.getCell(5));
 
                     if (!StringUtils.hasText(topicName)) {
                         errors.add("第" + (i + 1) + "行：课题名称为空");
@@ -227,6 +231,9 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
                     topic.setCurrentCount(0);
                     topic.setStatus("OPEN");
                     topic.setDescription(StringUtils.hasText(description) ? description.trim() : null);
+                    if (StringUtils.hasText(schoolName)) {
+                        topic.setCampusName(schoolName.trim());
+                    }
                     projectTopicMapper.insert(topic);
                     successCount++;
                 } catch (Exception e) {
@@ -245,7 +252,7 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
     }
 
     private boolean isRowEmpty(Row row) {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             Cell cell = row.getCell(i);
             if (cell != null && cell.getCellType() != CellType.BLANK
                     && StringUtils.hasText(getCellString(cell))) {
@@ -277,19 +284,5 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
             }
         }
         return map;
-    }
-
-    private TopicResp toResp(ProjectTopic topic) {
-        TopicResp resp = new TopicResp();
-        resp.setTopicId(topic.getTopicId());
-        resp.setTopicName(topic.getTopicName());
-        resp.setAcademicYear(topic.getAcademicYear());
-        resp.setMaxStudents(topic.getMaxStudents());
-        resp.setCurrentCount(topic.getCurrentCount());
-        resp.setStatus(topic.getStatus());
-        resp.setDescription(topic.getDescription());
-        resp.setCreateTime(topic.getCreateTime());
-        resp.setUpdateTime(topic.getUpdateTime());
-        return resp;
     }
 }
