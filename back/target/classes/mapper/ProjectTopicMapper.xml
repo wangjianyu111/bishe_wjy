@@ -5,8 +5,6 @@
     <select id="selectTopicPage" resultType="com.gdplatform.dto.TopicResp">
         SELECT t.topic_id AS topicId,
                t.topic_name AS topicName,
-               t.teacher_id AS teacherId,
-               u.real_name AS teacherName,
                t.academic_year AS academicYear,
                t.max_students AS maxStudents,
                t.current_count AS currentCount,
@@ -15,7 +13,6 @@
                t.create_time AS createTime,
                t.update_time AS updateTime
         FROM project_topic t
-        LEFT JOIN sys_user u ON t.teacher_id = u.user_id
         WHERE t.is_deleted = 0
         <if test="academicYear != null and academicYear != ''">
             AND t.academic_year = #{academicYear}
@@ -48,8 +45,6 @@
     <select id="selectAllForExport" resultType="com.gdplatform.dto.TopicResp">
         SELECT t.topic_id AS topicId,
                t.topic_name AS topicName,
-               t.teacher_id AS teacherId,
-               u.real_name AS teacherName,
                t.academic_year AS academicYear,
                t.max_students AS maxStudents,
                t.current_count AS currentCount,
@@ -58,7 +53,6 @@
                t.create_time AS createTime,
                t.update_time AS updateTime
         FROM project_topic t
-        LEFT JOIN sys_user u ON t.teacher_id = u.user_id
         WHERE t.is_deleted = 0
         <if test="academicYear != null and academicYear != ''">
             AND t.academic_year = #{academicYear}

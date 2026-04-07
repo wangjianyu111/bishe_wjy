@@ -48,7 +48,6 @@
     <el-table :data="table.records" v-loading="loading" border stripe>
       <el-table-column prop="topicId" label="ID" width="70" />
       <el-table-column prop="topicName" label="课题名称" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="teacherName" label="指导教师" width="100" />
       <el-table-column prop="academicYear" label="学年" width="110" />
       <el-table-column label="名额" width="80" align="center">
         <template #default="{ row }">
@@ -105,16 +104,6 @@
       <el-form-item label="课题名称" prop="topicName">
         <el-input v-model="form.topicName" placeholder="请输入课题名称" maxlength="200" show-word-limit />
       </el-form-item>
-      <el-form-item label="指导教师" prop="teacherId">
-        <el-select v-model="form.teacherId" placeholder="请选择指导教师" style="width: 100%" filterable>
-          <el-option
-            v-for="t in teacherList"
-            :key="t.userId"
-            :label="t.realName + (t.teacherNo ? ' (' + t.teacherNo + ')' : '')"
-            :value="t.userId"
-          />
-        </el-select>
-      </el-form-item>
       <el-form-item label="学年" prop="academicYear">
         <el-input v-model="form.academicYear" placeholder="如 2024-2025" maxlength="20" style="width: 100%" />
       </el-form-item>
@@ -153,7 +142,6 @@ import {
   exportTopic,
   importTopic,
 } from '@/api/project'
-import { fetchUserList } from '@/api/system'
 import { Download, Upload, Plus } from '@element-plus/icons-vue'
 
 const store = useUserStore()
@@ -162,7 +150,6 @@ const submitting = ref(false)
 const importing = ref(false)
 const formRef = ref(null)
 const importInputRef = ref(null)
-const teacherList = ref([])
 
 const query = reactive({
   current: 1,
@@ -178,7 +165,6 @@ const dialog = reactive({ visible: false, title: '新增课题', isEdit: false }
 const form = ref({})
 const defaultForm = () => ({
   topicName: '',
-  teacherId: null,
   academicYear: '',
   maxStudents: 1,
   description: '',
@@ -187,7 +173,6 @@ form.value = defaultForm()
 
 const rules = {
   topicName: [{ required: true, message: '请输入课题名称', trigger: 'blur' }],
-  teacherId: [{ required: true, message: '请选择指导教师', trigger: 'change' }],
   academicYear: [{ required: true, message: '请输入学年', trigger: 'blur' }],
   maxStudents: [{ required: true, message: '请输入可选人数', trigger: 'blur' }],
 }
@@ -226,15 +211,6 @@ async function load() {
   }
 }
 
-async function loadTeacherList() {
-  try {
-    const data = await fetchUserList({ userType: 2, status: 1, current: 1, size: 9999 })
-    teacherList.value = data.records || []
-  } catch {
-    // ignore
-  }
-}
-
 function handleSearch() {
   query.current = 1
   load()
@@ -265,7 +241,6 @@ async function openEdit(row) {
     form.value = {
       topicId: data.topicId,
       topicName: data.topicName,
-      teacherId: data.teacherId,
       academicYear: data.academicYear,
       maxStudents: data.maxStudents,
       description: data.description || '',
@@ -377,7 +352,6 @@ async function handleImportFileChange(e) {
 // ---------- init ----------
 onMounted(() => {
   load()
-  loadTeacherList()
 })
 </script>
 

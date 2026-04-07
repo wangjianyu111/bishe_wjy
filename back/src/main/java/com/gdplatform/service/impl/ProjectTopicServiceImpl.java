@@ -65,14 +65,11 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(TopicAddReq req) {
-        SysUser teacher = sysUserMapper.selectById(req.getTeacherId());
-        if (teacher == null) {
-            throw new BizException("指导教师不存在");
-        }
-
         ProjectTopic topic = new ProjectTopic();
         topic.setTopicName(req.getTopicName());
-        topic.setTeacherId(req.getTeacherId());
+        if (req.getTeacherId() != null) {
+            topic.setTeacherId(req.getTeacherId());
+        }
         topic.setAcademicYear(req.getAcademicYear());
         topic.setMaxStudents(req.getMaxStudents());
         topic.setDescription(req.getDescription());
@@ -87,10 +84,6 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
         ProjectTopic topic = projectTopicMapper.selectById(req.getTopicId());
         if (topic == null) {
             throw new BizException("课题不存在");
-        }
-        SysUser teacher = sysUserMapper.selectById(req.getTeacherId());
-        if (teacher == null) {
-            throw new BizException("指导教师不存在");
         }
 
         topic.setTopicName(req.getTopicName());
@@ -149,8 +142,36 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
             // 先收集所有 teacherId -> real_name 映射
             Map<String, Long> teacherNameToId = buildTeacherNameToIdMap();
 
+            // 收集 Excel 中重复的课题名称
+            Map<String, Integer> excelSeen = new HashMap<>();
+            List<String> excelDuplicates = new ArrayList<>();
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row r = sheet.getRow(i);
+                if (r == null || isRowEmpty(r)) continue;
+                String name = getCellString(r.getCell(0));
+                if (!StringUtils.hasText(name)) continue;
+                excelSeen.put(name.trim(), excelSeen.getOrDefault(name.trim(), 0) + 1);
+            }
+            for (Map.Entry<String, Integer> e : excelSeen.entrySet()) {
+                if (e.getValue() > 1) {
+                    excelDuplicates.add(e.getKey());
+                }
+            }
+
+            // 收集数据库中已有的课题名称
+            List<ProjectTopic> existingTopics = projectTopicMapper.selectList(
+                    Wrappers.<ProjectTopic>lambdaQuery()
+                            .select(ProjectTopic::getTopicName));
+            Map<String, Long> dbTopicNameToId = new HashMap<>();
+            for (ProjectTopic t : existingTopics) {
+                if (StringUtils.hasText(t.getTopicName())) {
+                    dbTopicNameToId.put(t.getTopicName().trim(), t.getTopicId());
+                }
+            }
+
             int successCount = 0;
             int failCount = 0;
+            int skipCount = 0;
             List<String> errors = new ArrayList<>();
 
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
@@ -169,22 +190,24 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
                         failCount++;
                         continue;
                     }
+                    if (excelDuplicates.contains(topicName.trim())) {
+                        errors.add("第" + (i + 1) + "行：课题名称「" + topicName + "」在文件中重复");
+                        failCount++;
+                        continue;
+                    }
+                    if (dbTopicNameToId.containsKey(topicName.trim())) {
+                        skipCount++;
+                        continue;
+                    }
                     if (!StringUtils.hasText(academicYear)) {
                         errors.add("第" + (i + 1) + "行：学年开始为空");
                         failCount++;
                         continue;
                     }
-                    if (!StringUtils.hasText(teacherName)) {
-                        errors.add("第" + (i + 1) + "行：指导教师姓名为空");
-                        failCount++;
-                        continue;
-                    }
 
-                    Long teacherId = teacherNameToId.get(teacherName.trim());
-                    if (teacherId == null) {
-                        errors.add("第" + (i + 1) + "行：教师「" + teacherName + "」不存在");
-                        failCount++;
-                        continue;
+                    Long teacherId = null;
+                    if (StringUtils.hasText(teacherName)) {
+                        teacherId = teacherNameToId.get(teacherName.trim());
                     }
 
                     int maxStudents = 1;
@@ -213,8 +236,8 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
             }
 
             if (failCount > 0) {
-                log.warn("批量导入课题：成功{}条，失败{}条，错误：{}", successCount, failCount, errors);
-                throw new BizException("导入完成：成功" + successCount + "条，失败" + failCount + "条。失败行：" + String.join("；", errors));
+                log.warn("批量导入课题：成功{}条，跳过（已存在）{}条，失败{}条，错误：{}", successCount, skipCount, failCount, errors);
+                throw new BizException("导入完成：成功" + successCount + "条，跳过（已存在）" + skipCount + "条，失败" + failCount + "条。失败行：" + String.join("；", errors));
             }
         } catch (IOException e) {
             throw new BizException("文件读取失败：" + e.getMessage());
@@ -260,7 +283,6 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
         TopicResp resp = new TopicResp();
         resp.setTopicId(topic.getTopicId());
         resp.setTopicName(topic.getTopicName());
-        resp.setTeacherId(topic.getTeacherId());
         resp.setAcademicYear(topic.getAcademicYear());
         resp.setMaxStudents(topic.getMaxStudents());
         resp.setCurrentCount(topic.getCurrentCount());
@@ -268,10 +290,6 @@ public class ProjectTopicServiceImpl implements ProjectTopicService {
         resp.setDescription(topic.getDescription());
         resp.setCreateTime(topic.getCreateTime());
         resp.setUpdateTime(topic.getUpdateTime());
-        SysUser teacher = sysUserMapper.selectById(topic.getTeacherId());
-        if (teacher != null) {
-            resp.setTeacherName(teacher.getRealName());
-        }
         return resp;
     }
 }

@@ -12,7 +12,6 @@ public class TopicUpdateReq {
     @NotBlank(message = "课题名称不能为空")
     private String topicName;
 
-    @NotNull(message = "指导教师不能为空")
     private Long teacherId;
 
     @NotBlank(message = "学年不能为空")

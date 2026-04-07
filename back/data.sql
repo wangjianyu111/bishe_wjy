@@ -160,7 +160,7 @@ DROP TABLE IF EXISTS project_topic;
 CREATE TABLE project_topic (
   topic_id BIGINT PRIMARY KEY AUTO_INCREMENT,
   topic_name VARCHAR(255) NOT NULL,
-  teacher_id BIGINT NOT NULL COMMENT '指导教师',
+  teacher_id BIGINT DEFAULT NULL COMMENT '指导教师（可为空）',
   academic_year VARCHAR(20) NOT NULL COMMENT '学年 如2024-2025',
   max_students INT NOT NULL DEFAULT 1,
   current_count INT NOT NULL DEFAULT 0 COMMENT '已确认人数',
@@ -170,8 +170,7 @@ CREATE TABLE project_topic (
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_deleted TINYINT DEFAULT 0,
   KEY idx_topic_teacher (teacher_id),
-  KEY idx_topic_year (academic_year),
-  CONSTRAINT fk_topic_teacher FOREIGN KEY (teacher_id) REFERENCES sys_user (user_id)
+  KEY idx_topic_year (academic_year)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='毕业设计课题';
 
 CREATE TABLE project_selection (
