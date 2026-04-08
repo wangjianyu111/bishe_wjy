@@ -14,5 +14,6 @@ public class UserProfile {
     private Integer userType;
     private String studentNo;
     private String teacherNo;
+    private String campusName;
     private List<String> roles;
 }

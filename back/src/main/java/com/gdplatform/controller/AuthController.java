@@ -83,6 +83,7 @@ public class AuthController {
                 .userType(u.getUserType())
                 .studentNo(u.getStudentNo())
                 .teacherNo(u.getTeacherNo())
+                .campusName(u.getCampusName())
                 .roles(roleCodes)
                 .build());
         res.setMenus(permissionService.buildMenuTree(u.getUserId()));

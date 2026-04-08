@@ -15,7 +15,8 @@
               <el-option v-for="p in phaseOptions" :key="p" :label="p" :value="p" />
             </el-select>
           </el-form-item>
-          <el-form-item label="学校名称">
+          <!-- 教师/管理员可见学校筛选，学生隐藏（后端已自动按本校过滤） -->
+          <el-form-item v-if="!isStudent" label="学校名称">
             <el-input
               v-model="query.campusName"
               placeholder="搜索学校名称"
@@ -29,11 +30,22 @@
           </el-form-item>
         </el-form>
 
-        <div class="toolbar-right">
+        <!-- 上传按钮仅教师/管理员可见 -->
+        <div v-if="!isStudent" class="toolbar-right">
           <el-button type="primary" @click="openUpload">
             <el-icon><Upload /></el-icon> 上传模板
           </el-button>
         </div>
+      </div>
+
+      <!-- 学生提示 -->
+      <div v-if="isStudent && userCampusName" class="school-tip">
+        <el-icon><School /></el-icon>
+        您正在查看「{{ userCampusName }}」的模板，仅可下载，无法上传或删除
+      </div>
+      <div v-if="isStudent && !userCampusName" class="school-tip school-tip--warn">
+        <el-icon><Warning /></el-icon>
+        您当前未关联学校，无法查看模板，请联系管理员完善个人信息
       </div>
 
       <!-- 列表 -->
@@ -43,7 +55,8 @@
             <el-tag type="primary" size="small">{{ row.phase }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="campusName" label="学校名称" min-width="150" />
+        <!-- 教师/管理员可见学校列，学生隐藏 -->
+        <el-table-column v-if="!isStudent" prop="campusName" label="学校名称" min-width="150" />
         <el-table-column prop="originalName" label="文件名称" min-width="220">
           <template #default="{ row }">
             <div class="file-name-cell">
@@ -68,10 +81,14 @@
             {{ formatDate(row.uploadTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
+        <!-- 操作列：学生只显示下载，教师/管理员显示下载+删除 -->
+        <el-table-column label="操作" :width="isStudent ? 100 : 160" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleDownload(row)">下载</el-button>
+            <el-button type="primary" link size="small" @click="handleDownload(row)">
+              <el-icon><Download /></el-icon> 下载
+            </el-button>
             <el-button
+              v-if="!isStudent"
               type="danger"
               link
               size="small"
@@ -95,7 +112,7 @@
       </div>
     </el-card>
 
-    <!-- 上传弹窗 -->
+    <!-- 上传弹窗（仅教师/管理员） -->
     <el-dialog
       v-model="uploadDialog.visible"
       title="上传模板文件"
@@ -157,15 +174,21 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Upload, Document } from '@element-plus/icons-vue'
+import { Upload, Document, Download, School, Warning } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
 import {
   fetchTemplatePage,
   uploadTemplate,
   deleteTemplate,
   downloadTemplate,
 } from '@/api/project'
+
+const userStore = useUserStore()
+
+const isStudent = computed(() => userStore.user?.userType === 1)
+const userCampusName = computed(() => userStore.user?.campusName || '')
 
 const loading = ref(false)
 const uploadLoading = ref(false)
@@ -174,13 +197,11 @@ const uploadRef = ref(null)
 const fileList = ref([])
 const uploadFile = ref(null)
 
-// 阶段可选值
 const phaseOptions = [
   '选题阶段', '开题报告', '需求分析', '系统设计',
   '编码实现', '中期检查', '论文撰写', '答辩准备', '正式答辩',
 ]
 
-// 查询参数
 const query = reactive({
   phase: '',
   campusName: '',
@@ -192,7 +213,6 @@ const pagination = reactive({
 })
 const table = reactive({ records: [] })
 
-// 上传弹窗
 const uploadDialog = reactive({ visible: false })
 const uploadForm = reactive({
   phase: '',
@@ -204,7 +224,6 @@ const uploadRules = {
   campusName: [{ required: true, message: '请输入学校名称', trigger: 'blur' }],
 }
 
-// ---------- 工具函数 ----------
 function formatSize(bytes) {
   if (!bytes) return '—'
   if (bytes < 1024) return bytes + ' B'
@@ -219,7 +238,6 @@ function formatDate(dateStr) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
 }
 
-// ---------- 数据加载 ----------
 async function load() {
   loading.value = true
   try {
@@ -227,7 +245,8 @@ async function load() {
       current: pagination.current,
       size: pagination.size,
       phase: query.phase || undefined,
-      campusName: query.campusName || undefined,
+      // 学生用户不传 campusName，后端自动按本校过滤
+      campusName: isStudent.value ? undefined : (query.campusName || undefined),
     }
     const data = await fetchTemplatePage(params)
     table.records = data.records || []
@@ -251,7 +270,6 @@ function handleReset() {
   load()
 }
 
-// ---------- 上传 ----------
 function openUpload() {
   uploadForm.phase = ''
   uploadForm.campusName = ''
@@ -299,7 +317,6 @@ async function handleUpload() {
   }
 }
 
-// ---------- 下载 ----------
 async function handleDownload(row) {
   try {
     const blob = await downloadTemplate(row.templateId)
@@ -314,7 +331,6 @@ async function handleDownload(row) {
   }
 }
 
-// ---------- 删除 ----------
 async function handleDelete(row) {
   try {
     await ElMessageBox.confirm(
@@ -350,6 +366,25 @@ onMounted(() => {
 
 .toolbar-right {
   flex-shrink: 0;
+}
+
+.school-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: #f0f9eb;
+  border: 1px solid #e1f3d8;
+  border-radius: 4px;
+  color: #67c23a;
+  font-size: 13px;
+}
+
+.school-tip--warn {
+  background: #fdf6ec;
+  border-color: #f5dab1;
+  color: #e6a23c;
 }
 
 .file-name-cell {

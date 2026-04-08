@@ -89,4 +89,25 @@
         WHERE template_id = #{templateId} AND is_deleted = 0
     </select>
 
+    <select id="selectStudentTemplatePage" resultMap="TemplateRespMap">
+        SELECT template_id, phase, campus_name, file_name, original_name,
+               file_size, file_type, uploader_id, uploader_name, upload_time
+        FROM sys_template_file
+        WHERE is_deleted = 0 AND campus_name = #{campusName}
+        <if test="phase != null and phase != ''">
+            AND phase LIKE CONCAT('%', #{phase}, '%')
+        </if>
+        ORDER BY upload_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countStudentTemplatePage" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_template_file
+        WHERE is_deleted = 0 AND campus_name = #{campusName}
+        <if test="phase != null and phase != ''">
+            AND phase LIKE CONCAT('%', #{phase}, '%')
+        </if>
+    </select>
+
 </mapper>

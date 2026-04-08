@@ -23,4 +23,6 @@ public interface TemplateFileService {
     TemplateResp getDetail(Long templateId);
 
     void downloadTemplate(Long templateId, HttpServletResponse response) throws IOException;
+
+    void downloadStudentTemplate(Long templateId, String campusName, HttpServletResponse response) throws IOException;
 }

@@ -178,6 +178,38 @@ public class TemplateFileServiceImpl implements TemplateFileService {
         }
     }
 
+    @Override
+    public void downloadStudentTemplate(Long templateId, String campusName, HttpServletResponse response) throws IOException {
+        TemplateResp template = templateMapper.selectRespById(templateId);
+        if (template == null) {
+            throw new BizException("模板不存在");
+        }
+        if (!campusName.equals(template.getCampusName())) {
+            throw new BizException("无权下载该模板");
+        }
+
+        TemplateFile raw = templateMapper.selectById(templateId);
+        java.io.File file = new java.io.File(raw.getFilePath());
+        if (!file.exists()) {
+            throw new BizException("文件已被删除或不存在");
+        }
+
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"" + java.net.URLEncoder.encode(template.getOriginalName(), "UTF-8") + "\"");
+        response.setContentLengthLong(template.getFileSize());
+
+        try (java.io.InputStream is = new java.io.FileInputStream(file);
+             java.io.OutputStream os = response.getOutputStream()) {
+            byte[] buf = new byte[4096];
+            int len;
+            while ((len = is.read(buf)) > 0) {
+                os.write(buf, 0, len);
+            }
+            os.flush();
+        }
+    }
+
     private TemplateResp toResp(TemplateFile template) {
         TemplateResp resp = new TemplateResp();
         resp.setTemplateId(template.getTemplateId());

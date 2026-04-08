@@ -6,7 +6,9 @@ import com.gdplatform.dto.TemplateAddReq;
 import com.gdplatform.dto.TemplatePageReq;
 import com.gdplatform.dto.TemplateResp;
 import com.gdplatform.dto.TemplateUpdateReq;
+import com.gdplatform.entity.SysUser;
 import com.gdplatform.service.TemplateFileService;
+import com.gdplatform.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,8 @@ public class TemplateFileController {
 
     /**
      * 分页查询模板列表
+     * - 教师/管理员：可查看所有学校的模板，支持按学校名称筛选
+     * - 学生：自动过滤为本校模板，不显示学校筛选框
      */
     @GetMapping
     @PreAuthorize("hasAuthority('doc:template:list')")
@@ -45,6 +49,11 @@ public class TemplateFileController {
             @RequestParam(defaultValue = "10") long size,
             @RequestParam(required = false) String phase,
             @RequestParam(required = false) String campusName) {
+        SysUser user = SecurityUtils.currentUser();
+        // 学生用户自动过滤为本校模板，不受前端 campusName 参数影响
+        if (user.getUserType() == 1) {
+            campusName = user.getCampusName();
+        }
         TemplatePageReq req = new TemplatePageReq();
         req.setPhase(phase);
         req.setCampusName(campusName);
@@ -73,11 +82,18 @@ public class TemplateFileController {
 
     /**
      * 下载模板文件
+     * - 教师/管理员：可下载任意模板
+     * - 学生：仅可下载本校模板
      */
     @GetMapping("/download/{templateId}")
     @PreAuthorize("hasAuthority('doc:template:download')")
     public void downloadTemplate(@PathVariable Long templateId, HttpServletResponse response) throws IOException {
-        templateService.downloadTemplate(templateId, response);
+        SysUser user = SecurityUtils.currentUser();
+        if (user.getUserType() == 1) {
+            templateService.downloadStudentTemplate(templateId, user.getCampusName(), response);
+        } else {
+            templateService.downloadTemplate(templateId, response);
+        }
     }
 
     /**

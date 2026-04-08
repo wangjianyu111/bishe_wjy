@@ -23,4 +23,12 @@ public interface TemplateFileMapper extends BaseMapper<TemplateFile> {
     long countTemplatePage(@Param("req") TemplatePageReq req);
 
     TemplateResp selectRespById(@Param("templateId") Long templateId);
+
+    List<TemplateResp> selectStudentTemplatePage(@Param("campusName") String campusName,
+                                                  @Param("phase") String phase,
+                                                  @Param("offset") long offset,
+                                                  @Param("limit") long limit);
+
+    long countStudentTemplatePage(@Param("campusName") String campusName,
+                                  @Param("phase") String phase);
 }

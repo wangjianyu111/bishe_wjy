@@ -522,10 +522,10 @@ INSERT INTO sys_college (college_id, campus_id, college_name, college_code) VALU
 INSERT INTO sys_major (major_id, college_id, major_name, major_code) VALUES (1, 1, '软件工程', 'SE');
 
 -- 密码均为 123456（BCrypt）
-INSERT INTO sys_user (user_id, user_name, user_password, real_name, user_type, student_no, teacher_no, college_id, campus_id, major_id, user_phone, status) VALUES
-(1, 'admin', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '系统管理员', 3, NULL, NULL, NULL, NULL, NULL, '13800000000', 1),
-(2, 'teacher1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '张教授', 2, NULL, NULL, 1, NULL, 1, '13800000001', 1),
-(3, 'student1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '李同学', 1, '2021001', NULL, NULL, NULL, 1, '13800000002', 1);
+INSERT INTO sys_user (user_id, user_name, user_password, real_name, user_type, student_no, teacher_no, college_id, campus_id, campus_name, major_id, user_phone, status) VALUES
+(1, 'admin', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '系统管理员', 3, NULL, NULL, NULL, NULL, NULL, NULL, '13800000000', 1),
+(2, 'teacher1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '张教授', 2, NULL, NULL, 1, NULL, '哈尔滨信息工程学院', 1, '13800000001', 1),
+(3, 'student1', '$2b$12$FKzjFp99xf/G2PUBnKYuy.lkJUuxmaWuLDReNuvXaF3WsC6meVTFC', '李同学', 1, '2021001', NULL, NULL, 1, '哈尔滨信息工程学院', 1, '13800000002', 1);
 
 INSERT INTO sys_role (role_id, role_name, role_code, user_type, remark) VALUES
 (1, '管理员', 'ROLE_ADMIN', 3, '系统管理'),
@@ -562,9 +562,9 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (20, 0, '文档与材料管理',  'doc',                        1, '/doc',                  NULL,                  'FolderOpened',        3),
 (21, 20,'模板文件管理',    'doc:template',              2, '/doc/template',         'doc/template/index',     'Files',               1),
 (22, 20,'开题报告管理',    'doc:proposal',              2, '/doc/proposal',         NULL,                  'Reading',             2),
-(23, 20,'论文文档管理',    'doc:thesis',               2, '/doc/thesis',           NULL,                  'DocumentCopy',        3),
-(24, 20,'文档版本管理',    'doc:version',              2, '/doc/version',          NULL,                  'Collection',          4),
-(25, 20,'归档材料管理',    'doc:archive',              2, '/doc/archive',          NULL,                  'Box',                 5);
+(23, 20,'论文文档管理',    'doc:thesis',                2, '/doc/thesis',           NULL,                  'DocumentCopy',        3),
+(24, 20,'文档版本管理',    'doc:version',               2, '/doc/version',          NULL,                  'Collection',          4),
+(25, 20,'归档材料管理',    'doc:archive',               2, '/doc/archive',          NULL,                  'Box',                 5);
 
 -- （四）成果与审批管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
@@ -675,7 +675,7 @@ SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 121, 122, 123, 127, 129, 130, 131, 133, 134, 135, 136, 137, 138, 142);
+(113, 114, 117, 120, 121, 122, 123, 127, 129, 130, 131, 133, 134, 135, 136, 137, 138, 139, 142);
 
 INSERT INTO sys_config (config_key, config_value, remark) VALUES
 ('system.name', '大学生毕业设计审批一体化平台', '系统名称'),
