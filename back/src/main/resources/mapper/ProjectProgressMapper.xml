@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.ProjectProgressMapper">
+
+    <resultMap id="ProgressRespMap" type="com.gdplatform.dto.ProgressResp">
+        <id column="progress_id" property="progressId"/>
+        <result column="selection_id" property="selectionId"/>
+        <result column="phase" property="phase"/>
+        <result column="content" property="content"/>
+        <result column="plan_date" property="planDate"/>
+        <result column="actual_date" property="actualDate"/>
+        <result column="percent_done" property="percentDone"/>
+        <result column="submit_time" property="submitTime"/>
+        <result column="student_id" property="studentId"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="topic_id" property="topicId"/>
+        <result column="topic_name" property="topicName"/>
+        <result column="custom_topic_name" property="customTopicName"/>
+        <result column="is_custom_topic" property="isCustomTopic"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="teacher_no" property="teacherNo"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="selection_status" property="selectionStatus"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="progressBaseSelect">
+        SELECT
+            p.progress_id,
+            p.selection_id,
+            p.phase,
+            p.content,
+            p.plan_date,
+            p.actual_date,
+            p.percent_done,
+            p.submit_time,
+            s.student_id,
+            stu.real_name AS student_name,
+            stu.student_no,
+            s.topic_id,
+            t.topic_name,
+            s.custom_topic_name,
+            s.is_custom_topic,
+            s.teacher_id,
+            tea.real_name AS teacher_name,
+            tea.teacher_no,
+            s.campus_name,
+            s.academic_year,
+            s.status AS selection_status,
+            s.create_time
+        FROM project_progress p
+        LEFT JOIN project_selection s ON p.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        LEFT JOIN sys_user tea ON s.teacher_id = tea.user_id AND tea.is_deleted = 0
+        WHERE p.is_deleted = 0
+    </sql>
+
+    <!-- 管理员/教师端：查询所有已通过选题的进度 -->
+    <select id="selectProgressPage" resultMap="ProgressRespMap">
+        <include refid="progressBaseSelect"/>
+        AND s.status = 'APPROVED'
+        <if test="req.selectionId != null">
+            AND s.selection_id = #{req.selectionId}
+        </if>
+        <if test="req.campusName != null and req.campusName != ''">
+            AND s.campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        <if test="req.teacherId != null">
+            AND s.teacher_id = #{req.teacherId}
+        </if>
+        <if test="req.studentId != null">
+            AND s.student_id = #{req.studentId}
+        </if>
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND s.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+        ORDER BY s.create_time DESC, p.submit_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countProgressPage" resultType="long">
+        SELECT COUNT(DISTINCT s.selection_id)
+        FROM project_progress p
+        LEFT JOIN project_selection s ON p.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        WHERE p.is_deleted = 0
+        AND s.status = 'APPROVED'
+        <if test="req.selectionId != null">
+            AND s.selection_id = #{req.selectionId}
+        </if>
+        <if test="req.campusName != null and req.campusName != ''">
+            AND s.campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        <if test="req.teacherId != null">
+            AND s.teacher_id = #{req.teacherId}
+        </if>
+        <if test="req.studentId != null">
+            AND s.student_id = #{req.studentId}
+        </if>
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND s.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+    </select>
+
+    <!-- 教师端：查询自己指导的学生的进度 -->
+    <select id="selectProgressPageForTeacher" resultMap="ProgressRespMap">
+        <include refid="progressBaseSelect"/>
+        AND s.teacher_id = #{req.teacherId}
+        AND s.status = 'APPROVED'
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+        ORDER BY s.create_time DESC, p.submit_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countProgressPageForTeacher" resultType="long">
+        SELECT COUNT(DISTINCT s.selection_id)
+        FROM project_progress p
+        LEFT JOIN project_selection s ON p.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        WHERE p.is_deleted = 0
+          AND s.teacher_id = #{req.teacherId}
+          AND s.status = 'APPROVED'
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+    </select>
+
+    <!-- 学生端：查询自己审批通过的选题进度 -->
+    <select id="selectProgressPageForStudent" resultMap="ProgressRespMap">
+        <include refid="progressBaseSelect"/>
+        AND s.status = 'APPROVED'
+        <if test="req.selectionId != null">
+            AND s.selection_id = #{req.selectionId}
+        </if>
+        <if test="req.studentId != null">
+            AND s.student_id = #{req.studentId}
+        </if>
+        ORDER BY p.submit_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countProgressPageForStudent" resultType="long">
+        SELECT COUNT(DISTINCT s.selection_id)
+        FROM project_progress p
+        LEFT JOIN project_selection s ON p.selection_id = s.selection_id AND s.is_deleted = 0
+        WHERE p.is_deleted = 0
+        AND s.status = 'APPROVED'
+        <if test="req.selectionId != null">
+            AND s.selection_id = #{req.selectionId}
+        </if>
+        <if test="req.studentId != null">
+            AND s.student_id = #{req.studentId}
+        </if>
+    </select>
+
+    <update id="updateById">
+        UPDATE project_progress
+        SET phase = #{phase},
+            content = #{content},
+            plan_date = #{planDate},
+            actual_date = #{actualDate},
+            percent_done = #{percentDone}
+        WHERE progress_id = #{progressId}
+    </update>
+
+    <update id="deleteById">
+        UPDATE project_progress SET is_deleted = 1 WHERE progress_id = #{progressId}
+    </update>
+
+    <select id="selectById" resultType="com.gdplatform.entity.ProjectProgress">
+        SELECT * FROM project_progress WHERE progress_id = #{progressId} AND is_deleted = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="progressId">
+        INSERT INTO project_progress (
+            selection_id, phase, content, plan_date, actual_date,
+            percent_done, submit_time
+        ) VALUES (
+            #{selectionId}, #{phase}, #{content}, #{planDate}, #{actualDate},
+            #{percentDone}, #{submitTime}
+        )
+    </insert>
+
+</mapper>

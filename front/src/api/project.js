@@ -76,3 +76,59 @@ export function rejectSelection(data) {
 export function fetchTeacherApprovals(params) {
   return http.get('/project/selections/teacher-approvals', { params })
 }
+
+// ---------- 项目进度 ----------
+export function fetchMyProgressPage(params) {
+  return http.get('/project/progress/my', { params })
+}
+
+export function fetchProgressBySelection(selectionId) {
+  return http.get(`/project/progress/selection/${selectionId}`)
+}
+
+export function addProgress(data) {
+  return http.post('/project/progress', data)
+}
+
+export function updateProgress(data) {
+  return http.put('/project/progress', data)
+}
+
+export function deleteProgress(progressId) {
+  return http.delete(`/project/progress/${progressId}`)
+}
+
+export function fetchAdminProgressPage(params) {
+  return http.get('/project/progress/admin/page', { params })
+}
+
+export function fetchTeacherProgressPage(params) {
+  return http.get('/project/progress/teacher/page', { params })
+}
+
+// ---------- 模板文件 ----------
+export function fetchTemplatePage(params) {
+  return http.get('/doc/template', { params })
+}
+
+export function uploadTemplate(formData) {
+  return http.post('/doc/template', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export function updateTemplate(data) {
+  return http.put('/doc/template', data)
+}
+
+export function deleteTemplate(templateId) {
+  return http.delete(`/doc/template/${templateId}`)
+}
+
+export function downloadTemplate(templateId) {
+  return http.get(`/doc/template/download/${templateId}`, { responseType: 'blob' })
+}
+
+export function fetchTemplateDetail(templateId) {
+  return http.get(`/doc/template/${templateId}`)
+}

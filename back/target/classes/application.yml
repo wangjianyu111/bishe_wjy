@@ -34,6 +34,10 @@ spring:
           auth: true
           starttls:
             enable: true
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
@@ -51,3 +55,5 @@ gd:
     expire-minutes: 720
   upload:
     path: ./uploads
+  template:
+    path: ./uploads/templates

@@ -5,6 +5,24 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================
+-- 模板文件表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS sys_template_file (
+    template_id      BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '模板ID',
+    phase            VARCHAR(100) NOT NULL COMMENT '毕设阶段',
+    campus_name      VARCHAR(100) NOT NULL COMMENT '学校名称',
+    file_name        VARCHAR(255) NOT NULL COMMENT '服务器文件名',
+    original_name    VARCHAR(255) NOT NULL COMMENT '原始文件名',
+    file_path        VARCHAR(500) NOT NULL COMMENT '文件存储路径',
+    file_size        BIGINT DEFAULT 0 COMMENT '文件大小（字节）',
+    file_type        VARCHAR(50)  DEFAULT '' COMMENT '文件扩展名',
+    uploader_id      BIGINT COMMENT '上传人ID',
+    uploader_name    VARCHAR(50) COMMENT '上传人姓名',
+    upload_time      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+    is_deleted       TINYINT DEFAULT 0 COMMENT '0正常 1删除'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='模板文件表';
+
+-- ============================================================
 -- 大学生毕业设计审批一体化平台 - MySQL 8 数据库脚本
 -- 说明：密码字段存 BCrypt；业务主键统一 BIGINT；逻辑删除用 is_deleted
 -- ============================================================
@@ -209,6 +227,7 @@ CREATE TABLE project_progress (
   actual_date DATE DEFAULT NULL,
   percent_done TINYINT DEFAULT 0 COMMENT '0-100',
   submit_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  is_deleted TINYINT DEFAULT 0 COMMENT '0正常 1删除',
   KEY idx_prog_selection (selection_id),
   CONSTRAINT fk_prog_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目进度';
@@ -535,13 +554,13 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (11, 10,'选题发布管理',    'project:topic',              2, '/project/topic',         'project/topic/index',  'Document',            1),
 (12, 10,'选题申请管理',    'project:selection',          2, '/project/selection',      'project/selection/index','EditPen',           2),
 (13, 10,'选题审批管理',    'project:approval',           2, '/project/approval',      'project/approval/index','CircleCheck',        3),
-(14, 10,'项目进度管理',    'project:progress',           2, '/project/progress',      NULL,                  'TrendCharts',        4),
+(14, 10,'项目进度管理',    'project:progress',           2, '/project/progress',      'project/progress/index', 'TrendCharts',        4),
 (15, 10,'中期检查管理',    'project:midterm',            2, '/project/midterm',       NULL,                  'Finished',           5);
 
 -- （三）文档与材料管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
 (20, 0, '文档与材料管理',  'doc',                        1, '/doc',                  NULL,                  'FolderOpened',        3),
-(21, 20,'模板文件管理',    'doc:template',              2, '/doc/template',         NULL,                  'Files',               1),
+(21, 20,'模板文件管理',    'doc:template',              2, '/doc/template',         'doc/template/index',     'Files',               1),
 (22, 20,'开题报告管理',    'doc:proposal',              2, '/doc/proposal',         NULL,                  'Reading',             2),
 (23, 20,'论文文档管理',    'doc:thesis',               2, '/doc/thesis',           NULL,                  'DocumentCopy',        3),
 (24, 20,'文档版本管理',    'doc:version',              2, '/doc/version',          NULL,                  'Collection',          4),
@@ -622,7 +641,17 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (129, 41,'添加记录',   'guidance:record:add',   4, 1),
 (130, 42,'教师反馈',   'guidance:feedback:add', 4, 1),
 (131, 43,'发起预警',   'guidance:warning:add',  4, 1),
-(132, 44,'分配指导教师','guidance:relation:assign',4,1);
+(132, 44,'分配指导教师','guidance:relation:assign',4,1),
+-- 进度管理
+(135, 14,'进度列表',   'project:progress:list', 4, 1),
+(136, 14,'添加进度',   'project:progress:add',  4, 2),
+(137, 14,'编辑进度',   'project:progress:edit', 4, 3),
+(138, 14,'删除进度',   'project:progress:del',  4, 4),
+-- 模板管理
+(139, 21,'模板列表',   'doc:template:list',   4, 2),
+(140, 21,'编辑模板',   'doc:template:edit',  4, 3),
+(141, 21,'删除模板',   'doc:template:del',    4, 4),
+(142, 21,'下载模板',   'doc:template:download',4,5);
 
 -- ============================================================
 -- 角色权限分配
@@ -638,7 +667,7 @@ SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134);
+(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142);
 
 -- 学生：只能访问与自己相关的模块（选题浏览、选题申请、项目进度、中期检查、文档、成果、指导）
 INSERT INTO sys_role_permission (role_id, perm_id)
@@ -646,7 +675,7 @@ SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 121, 122, 123, 127, 129, 130, 131, 133, 134);
+(113, 114, 117, 120, 121, 122, 123, 127, 129, 130, 131, 133, 134, 135, 136, 137, 138, 142);
 
 INSERT INTO sys_config (config_key, config_value, remark) VALUES
 ('system.name', '大学生毕业设计审批一体化平台', '系统名称'),

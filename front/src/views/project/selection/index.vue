@@ -310,7 +310,12 @@ const academicYearOptions = computed(() => {
 async function loadTeachers(campusId) {
   teacherLoading.value = true
   try {
-    teacherList.value = await fetchTeachers({ campusId })
+    // 优先按学校名称模糊查询，fallback 到 campusId
+    if (form.campusName?.trim()) {
+      teacherList.value = await fetchTeachers({ campusName: form.campusName.trim() })
+    } else {
+      teacherList.value = await fetchTeachers({ campusId })
+    }
   } finally {
     teacherLoading.value = false
   }
@@ -461,7 +466,7 @@ watch(() => form.campusName, (val) => {
   if (val?.trim()) {
     teacherList.value = []
     form.teacherId = null
-    loadTeachers(null)
+    loadTeachers(null) // loadTeachers 内部会根据 form.campusName 过滤
   }
 })
 

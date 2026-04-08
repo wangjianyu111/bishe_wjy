@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.TemplateFileMapper">
+
+    <resultMap id="BaseResultMap" type="com.gdplatform.entity.TemplateFile">
+        <id column="template_id" property="templateId"/>
+        <result column="phase" property="phase"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="file_name" property="fileName"/>
+        <result column="original_name" property="originalName"/>
+        <result column="file_path" property="filePath"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_type" property="fileType"/>
+        <result column="uploader_id" property="uploaderId"/>
+        <result column="uploader_name" property="uploaderName"/>
+        <result column="upload_time" property="uploadTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <resultMap id="TemplateRespMap" type="com.gdplatform.dto.TemplateResp">
+        <id column="template_id" property="templateId"/>
+        <result column="phase" property="phase"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="file_name" property="fileName"/>
+        <result column="original_name" property="originalName"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_type" property="fileType"/>
+        <result column="uploader_id" property="uploaderId"/>
+        <result column="uploader_name" property="uploaderName"/>
+        <result column="upload_time" property="uploadTime"/>
+    </resultMap>
+
+    <insert id="insertTemplate" useGeneratedKeys="true" keyProperty="template.templateId">
+        INSERT INTO sys_template_file (
+            phase, campus_name, file_name, original_name, file_path,
+            file_size, file_type, uploader_id, uploader_name, upload_time
+        ) VALUES (
+            #{template.phase}, #{template.campusName}, #{template.fileName},
+            #{template.originalName}, #{template.filePath}, #{template.fileSize},
+            #{template.fileType}, #{template.uploaderId}, #{template.uploaderName},
+            #{template.uploadTime}
+        )
+    </insert>
+
+    <update id="updateTemplate">
+        UPDATE sys_template_file
+        <set>
+            <if test="template.phase != null and template.phase != ''">
+                phase = #{template.phase},
+            </if>
+            <if test="template.campusName != null and template.campusName != ''">
+                campus_name = #{template.campusName},
+            </if>
+        </set>
+        WHERE template_id = #{template.templateId} AND is_deleted = 0
+    </update>
+
+    <select id="selectTemplatePage" resultMap="TemplateRespMap">
+        SELECT template_id, phase, campus_name, file_name, original_name,
+               file_size, file_type, uploader_id, uploader_name, upload_time
+        FROM sys_template_file
+        WHERE is_deleted = 0
+        <if test="req.phase != null and req.phase != ''">
+            AND phase LIKE CONCAT('%', #{req.phase}, '%')
+        </if>
+        <if test="req.campusName != null and req.campusName != ''">
+            AND campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        ORDER BY upload_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countTemplatePage" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_template_file
+        WHERE is_deleted = 0
+        <if test="req.phase != null and req.phase != ''">
+            AND phase LIKE CONCAT('%', #{req.phase}, '%')
+        </if>
+        <if test="req.campusName != null and req.campusName != ''">
+            AND campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+    </select>
+
+    <select id="selectRespById" resultMap="TemplateRespMap">
+        SELECT template_id, phase, campus_name, file_name, original_name,
+               file_size, file_type, uploader_id, uploader_name, upload_time
+        FROM sys_template_file
+        WHERE template_id = #{templateId} AND is_deleted = 0
+    </select>
+
+</mapper>
