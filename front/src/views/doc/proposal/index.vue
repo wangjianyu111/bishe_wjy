@@ -29,13 +29,13 @@
         </div>
         <el-empty v-else description="您还没有审批通过的选题，无法提交开题报告" />
 
-        <div v-if="mySelection?.status === 'APPROVED'" class="action-bar">
+        <div class="action-bar">
           <el-button type="primary" @click="handleStudentSubmitClick">
             <el-icon><Upload /></el-icon>
             {{ studentSubmitButtonLabel }}
           </el-button>
           <el-button
-            v-if="myProposalList.length && myProposalList[0].status === 'PENDING'"
+            v-if="mySelection?.status === 'APPROVED' && myProposalList.length && myProposalList[0].status === 'PENDING'"
             type="warning"
             @click="handleRecall"
           >
@@ -220,7 +220,7 @@
             placeholder="请填写开题报告内容，说明课题背景、研究内容、研究方案、进度安排等"
           />
         </el-form-item>
-        <el-form-item label="上传附件">
+        <el-form-item label="上传附件" prop="file">
           <div class="upload-area">
             <el-upload
               ref="submitUploadRef"
@@ -231,10 +231,10 @@
               :file-list="submitFileList"
               accept=".doc,.docx,.pdf,.zip,.rar"
               action="#"
+              drag
             >
-              <el-button type="primary" plain>
-                <el-icon><Upload /></el-icon> 选择文件
-              </el-button>
+              <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+              <div class="el-upload__text">将文件拖到此处，或 <em>点击选择</em></div>
             </el-upload>
             <div class="upload-tip">支持 .doc / .docx / .pdf / .zip / .rar，单个文件不超过 50MB</div>
           </div>
@@ -289,8 +289,8 @@
         </el-descriptions-item>
       </el-descriptions>
       <template #footer v-if="!isStudent && currentRow?.status === 'PENDING'">
-        <el-button type="success" :loading="reviewLoading" @click="handleReview('PASSED')">通过</el-button>
-        <el-button type="danger" :loading="reviewLoading" @click="rejectDialogVisible = true">驳回</el-button>
+        <el-button type="success" :loading="reviewLoading" @click="handleReview(currentRow.proposalId, 'PASSED')">通过</el-button>
+        <el-button type="danger" :loading="reviewLoading" @click="openReviewDialog(currentRow, 'FAILED')">驳回</el-button>
       </template>
     </el-dialog>
 
@@ -317,7 +317,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Upload, Finished, Document, RefreshLeft } from '@element-plus/icons-vue'
+import { Upload, UploadFilled, Finished, Document, RefreshLeft } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import {
   fetchMySelection,
@@ -362,6 +362,8 @@ async function loadMyData() {
 const latestStudentProposal = computed(() => myProposalList.value[0] ?? null)
 
 const studentSubmitButtonLabel = computed(() => {
+  if (!mySelection.value) return '提交开题报告'
+  if (mySelection.value.status !== 'APPROVED') return '提交开题报告（选题审批中）'
   const latest = latestStudentProposal.value
   if (!latest) return '提交开题报告'
   if (String(latest.status || '').toUpperCase() === 'FAILED') return '重新提交开题报告'
@@ -369,6 +371,14 @@ const studentSubmitButtonLabel = computed(() => {
 })
 
 function handleStudentSubmitClick() {
+  if (!mySelection.value) {
+    ElMessage.warning('您还没有选题，无法提交开题报告')
+    return
+  }
+  if (mySelection.value.status !== 'APPROVED') {
+    ElMessage.warning('选题尚未审批通过，请等待审批完成后再提交开题报告')
+    return
+  }
   const latest = latestStudentProposal.value
   const st = latest?.status ? String(latest.status).toUpperCase() : ''
   if (st === 'PASSED') {
@@ -590,10 +600,10 @@ const rejectRules = {
 }
 
 function openReviewDialog(row, status) {
-  pendingReviewRow.value = row
   if (status === 'PASSED') {
-    handleReview('PASSED')
+    handleReview(row.proposalId, 'PASSED')
   } else {
+    pendingReviewRow.value = row
     rejectForm.inspectComment = ''
     rejectDialogVisible.value = true
   }
@@ -618,11 +628,11 @@ async function confirmReject() {
   }
 }
 
-async function handleReview(status) {
+async function handleReview(proposalId, status) {
   reviewLoading.value = true
   try {
     await reviewProposal({
-      proposalId: currentRow.value.proposalId,
+      proposalId: proposalId,
       status: status,
       inspectComment: status === 'FAILED' ? rejectForm.inspectComment : null,
     })
@@ -773,6 +783,27 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+}
+
+.upload-area :deep(.el-upload) {
+  width: 100%;
+}
+
+.upload-area :deep(.el-upload-dragger) {
+  width: 100%;
+  padding: 24px 16px;
+}
+
+.upload-area :deep(.el-icon--upload) {
+  font-size: 40px;
+  color: #c0c4cc;
+  margin-bottom: 8px;
+}
+
+.upload-area :deep(.el-upload__text) {
+  font-size: 14px;
+  color: #606266;
 }
 
 .upload-tip {
