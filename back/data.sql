@@ -305,13 +305,19 @@ CREATE TABLE doc_version (
 CREATE TABLE proposal_report (
   proposal_id BIGINT PRIMARY KEY AUTO_INCREMENT,
   selection_id BIGINT NOT NULL,
+  report_content TEXT DEFAULT NULL,
   file_id BIGINT DEFAULT NULL,
-  status VARCHAR(20) DEFAULT 'DRAFT' COMMENT 'DRAFT草稿 SUBMITTED已提交 APPROVED通过 REJECTED驳回',
+  status VARCHAR(20) DEFAULT 'PENDING' COMMENT 'PENDING待审 PASSED通过 FAILED驳回',
+  inspector_id BIGINT DEFAULT NULL COMMENT '审核人(教师/管理员)',
+  inspect_comment VARCHAR(500) DEFAULT NULL COMMENT '审核意见',
+  inspect_time DATETIME DEFAULT NULL COMMENT '审核时间',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_proposal_selection (selection_id),
+  KEY idx_prop_selection (selection_id),
+  KEY idx_prop_inspector (inspector_id),
   CONSTRAINT fk_prop_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
-  CONSTRAINT fk_prop_file FOREIGN KEY (file_id) REFERENCES doc_file (file_id)
+  CONSTRAINT fk_prop_file FOREIGN KEY (file_id) REFERENCES doc_file (file_id),
+  CONSTRAINT fk_prop_inspector FOREIGN KEY (inspector_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='开题报告';
 
 CREATE TABLE thesis_document (
@@ -561,7 +567,7 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
 (20, 0, '文档与材料管理',  'doc',                        1, '/doc',                  NULL,                  'FolderOpened',        3),
 (21, 20,'模板文件管理',    'doc:template',              2, '/doc/template',         'doc/template/index',     'Files',               1),
-(22, 20,'开题报告管理',    'doc:proposal',              2, '/doc/proposal',         NULL,                  'Reading',             2),
+(22, 20,'开题报告管理',    'doc:proposal',            2, '/doc/proposal',         'doc/proposal/index',      'Reading',             2),
 (23, 20,'论文文档管理',    'doc:thesis',                2, '/doc/thesis',           NULL,                  'DocumentCopy',        3),
 (24, 20,'文档版本管理',    'doc:version',               2, '/doc/version',          NULL,                  'Collection',          4),
 (25, 20,'归档材料管理',    'doc:archive',               2, '/doc/archive',          NULL,                  'Box',                 5);
@@ -614,11 +620,11 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (110, 11,'课题发布',   'project:topic:add',    4, 1),
 (111, 11,'课题编辑',   'project:topic:edit',   4, 2),
 (112, 11,'课题删除',   'project:topic:del',    4, 3),
-(133, 11,'课题列表',   'project:topic:list',    4, 4),
+(141, 11,'课题列表',   'project:topic:list',    4, 4),
 -- 选题管理
 (113, 12,'提交申请',   'project:selection:apply', 4, 1),
 (114, 12,'撤回申请',   'project:selection:recall',4, 2),
-(134, 12,'选题列表',   'project:selection:list', 4, 3),
+(145, 12,'选题列表',   'project:selection:list', 4, 3),
 -- 审批管理
 (115, 13,'通过选题',   'project:approval:pass',  4, 1),
 (116, 13,'驳回选题',   'project:approval:reject',4, 2),
@@ -628,30 +634,31 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 -- 文档
 (119, 21,'上传模板',   'doc:template:upload',  4, 1),
 (120, 22,'提交开题报告','doc:proposal:submit',  4, 1),
-(121, 23,'上传论文',   'doc:thesis:upload',    4, 1),
-(122, 24,'查看版本',   'doc:version:view',    4, 1),
-(123, 25,'归档',       'doc:archive:archive', 4, 1),
+(143, 22,'审核开题报告','doc:proposal:review', 4, 2),
+(122, 23,'上传论文',   'doc:thesis:upload',    4, 1),
+(144, 24,'查看版本',   'doc:version:view',    4, 1),
+(124, 25,'归档',       'doc:archive:archive', 4, 1),
 -- 成果
-(124, 31,'提交成果',   'achievement:submit:add', 4, 1),
-(125, 32,'安排答辩',   'achievement:defense:arrange',4,1),
-(126, 33,'审批',       'achievement:approval:do',  4, 1),
-(127, 34,'录入成绩',   'achievement:grade:input',   4, 1),
-(128, 35,'评定优秀',   'achievement:excellent:add', 4, 1),
+(125, 31,'提交成果',   'achievement:submit:add', 4, 1),
+(126, 32,'安排答辩',   'achievement:defense:arrange',4,1),
+(127, 33,'审批',       'achievement:approval:do',  4, 1),
+(128, 34,'录入成绩',   'achievement:grade:input',   4, 1),
+(129, 35,'评定优秀',   'achievement:excellent:add', 4, 1),
 -- 指导
-(129, 41,'添加记录',   'guidance:record:add',   4, 1),
-(130, 42,'教师反馈',   'guidance:feedback:add', 4, 1),
-(131, 43,'发起预警',   'guidance:warning:add',  4, 1),
-(132, 44,'分配指导教师','guidance:relation:assign',4,1),
+(130, 41,'添加记录',   'guidance:record:add',   4, 1),
+(131, 42,'教师反馈',   'guidance:feedback:add', 4, 1),
+(132, 43,'发起预警',   'guidance:warning:add',  4, 1),
+(134, 44,'分配指导教师','guidance:relation:assign',4,1),
 -- 进度管理
-(135, 14,'进度列表',   'project:progress:list', 4, 1),
-(136, 14,'添加进度',   'project:progress:add',  4, 2),
+(136, 14,'进度列表',   'project:progress:list', 4, 1),
+(142, 14,'添加进度',   'project:progress:add',  4, 2),
 (137, 14,'编辑进度',   'project:progress:edit', 4, 3),
 (138, 14,'删除进度',   'project:progress:del',  4, 4),
 -- 模板管理
 (139, 21,'模板列表',   'doc:template:list',   4, 2),
 (140, 21,'编辑模板',   'doc:template:edit',  4, 3),
-(141, 21,'删除模板',   'doc:template:del',    4, 4),
-(142, 21,'下载模板',   'doc:template:download',4,5);
+(146, 21,'删除模板',   'doc:template:del',    4, 4),
+(147, 21,'下载模板',   'doc:template:download',4,5);
 
 -- ============================================================
 -- 角色权限分配
@@ -667,7 +674,7 @@ SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142);
+(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147);
 
 -- 学生：只能访问与自己相关的模块（选题浏览、选题申请、项目进度、中期检查、文档、成果、指导）
 INSERT INTO sys_role_permission (role_id, perm_id)
@@ -675,7 +682,7 @@ SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 121, 122, 123, 127, 129, 130, 131, 133, 134, 135, 136, 137, 138, 139, 142);
+(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147);
 
 INSERT INTO sys_config (config_key, config_value, remark) VALUES
 ('system.name', '大学生毕业设计审批一体化平台', '系统名称'),

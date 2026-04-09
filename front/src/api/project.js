@@ -133,6 +133,39 @@ export function fetchTemplateDetail(templateId) {
   return http.get(`/doc/template/${templateId}`)
 }
 
+// ---------- 开题报告 ----------
+export function fetchMyProposal() {
+  return http.get('/project/proposal/my')
+}
+
+export function fetchMyProposalList() {
+  return http.get('/project/proposal/my/list')
+}
+
+export function submitProposal(data) {
+  return http.post('/project/proposal', data)
+}
+
+export function recallProposal(proposalId) {
+  return http.put(`/project/proposal/recall/${proposalId}`)
+}
+
+export function fetchAdminProposalPage(params) {
+  return http.get('/project/proposal/admin/page', { params })
+}
+
+export function fetchTeacherProposalPage(params) {
+  return http.get('/project/proposal/teacher/page', { params })
+}
+
+export function reviewProposal(data) {
+  return http.put('/project/proposal/review', data)
+}
+
+export function fetchProposalDetail(proposalId) {
+  return http.get(`/project/proposal/${proposalId}`)
+}
+
 // ---------- 中期检查 ----------
 export function fetchMyMidTerm() {
   return http.get('/project/midterm/my')
