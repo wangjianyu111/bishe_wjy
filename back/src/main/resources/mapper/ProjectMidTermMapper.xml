@@ -195,10 +195,12 @@
         AND s.status = 'APPROVED'
     </select>
 
-    <!-- 根据选题ID查询中期检查（学生端详情） -->
+    <!-- 根据选题ID查询中期检查（学生端详情，只取最新一条） -->
     <select id="selectBySelectionId" resultMap="MidTermRespMap">
         <include refid="midTermBaseSelect"/>
         AND m.selection_id = #{selectionId}
+        ORDER BY m.mid_id DESC
+        LIMIT 1
     </select>
 
     <select id="selectById" resultType="com.gdplatform.entity.ProjectMidTerm">

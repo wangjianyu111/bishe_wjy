@@ -161,3 +161,8 @@ export function reviewMidTerm(data) {
 export function fetchMidTermDetail(midId) {
   return http.get(`/project/midterm/${midId}`)
 }
+
+// ---------- 文件 ----------
+export function downloadDocFile(fileId) {
+  return http.get(`/doc/file/download/${fileId}`, { responseType: 'blob' })
+}

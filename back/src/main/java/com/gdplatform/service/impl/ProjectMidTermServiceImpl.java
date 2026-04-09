@@ -8,6 +8,7 @@ import com.gdplatform.dto.*;
 import com.gdplatform.entity.ProjectMidTerm;
 import com.gdplatform.entity.ProjectSelection;
 import com.gdplatform.entity.SysUser;
+import com.gdplatform.mapper.DocFileMapper;
 import com.gdplatform.mapper.ProjectMidTermMapper;
 import com.gdplatform.mapper.ProjectSelectionMapper;
 import com.gdplatform.service.NotificationService;
@@ -26,6 +27,7 @@ public class ProjectMidTermServiceImpl implements ProjectMidTermService {
 
     private final ProjectMidTermMapper midTermMapper;
     private final ProjectSelectionMapper selectionMapper;
+    private final DocFileMapper docFileMapper;
     private final NotificationService notificationService;
 
     @Override
@@ -52,9 +54,12 @@ public class ProjectMidTermServiceImpl implements ProjectMidTermService {
             throw new BizException("中期检查已提交，请等待审核或撤回后再重新提交");
         }
 
-        // 如果是驳回后重新提交，先删除旧记录
+        // 如果是驳回后重新提交，先删除旧记录及其附件
         if (existing != null && "FAILED".equalsIgnoreCase(existing.getStatus())) {
-            // 查找并删除旧记录
+            if (existing.getFileId() != null) {
+                docFileMapper.deleteById(existing.getFileId());
+            }
+            midTermMapper.deleteById(existing.getMidId());
         }
 
         ProjectMidTerm record = new ProjectMidTerm();

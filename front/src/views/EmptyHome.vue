@@ -10,7 +10,6 @@
       </div>
       <h2 class="welcome-title">欢迎使用，大学生毕设审批一体化平台</h2>
       <p class="welcome-name">{{ store.user?.realName || store.user?.userName || '用户' }}</p>
-      <p class="welcome-tip">您当前尚未分配任何功能权限，请联系管理员为您分配角色和权限后再使用。</p>
       <div class="welcome-actions">
         <el-button type="primary" @click="goProfile">完善个人信息</el-button>
         <el-button @click="logout">退出登录</el-button>

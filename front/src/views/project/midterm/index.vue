@@ -142,12 +142,14 @@
             </template>
           </el-table-column>
           <el-table-column prop="academicYear" label="学年" width="110" />
-          <el-table-column prop="fileName" label="附件" width="160">
+          <el-table-column label="附件" width="180">
             <template #default="{ row }">
-              <span v-if="row.fileName" class="file-link">
-                <el-icon><Document /></el-icon>
-                {{ row.fileName }}
-              </span>
+              <el-tooltip v-if="row.fileName" :content="`点击预览 ${row.fileName}`" placement="top" :show-after="300">
+                <span class="file-link" @click.stop="previewFile(row.fileId, row.fileName)">
+                  <el-icon><Document /></el-icon>
+                  <span class="file-name">{{ row.fileName }}</span>
+                </span>
+              </el-tooltip>
               <span v-else style="color:#c0c4cc">无</span>
             </template>
           </el-table-column>
@@ -165,11 +167,13 @@
           </el-table-column>
           <el-table-column label="操作" width="200" fixed="right">
             <template #default="{ row }">
-              <el-button type="primary" size="small" plain @click="openDetail(row)">查看详情</el-button>
-              <template v-if="row.status === 'PENDING'">
-                <el-button type="success" size="small" @click="openReviewDialog(row, 'PASSED')">通过</el-button>
-                <el-button type="danger" size="small" @click="openReviewDialog(row, 'FAILED')">驳回</el-button>
-              </template>
+              <div class="action-btns">
+                <el-button type="primary" link size="small" @click="openDetail(row)">查看详情</el-button>
+                <template v-if="row.status === 'PENDING'">
+                  <el-button type="success" link size="small" @click="openReviewDialog(row, 'PASSED')">通过</el-button>
+                  <el-button type="danger" link size="small" @click="openReviewDialog(row, 'FAILED')">驳回</el-button>
+                </template>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -263,10 +267,12 @@
             <div class="report-content">{{ currentRow.reportContent || '—' }}</div>
           </el-descriptions-item>
           <el-descriptions-item label="附件" :span="2">
-            <span v-if="currentRow.fileName" class="file-link">
-              <el-icon><Document /></el-icon>
-              {{ currentRow.fileName }}
-            </span>
+            <el-tooltip v-if="currentRow.fileName" :content="`点击预览 ${currentRow.fileName}`" placement="top" :show-after="300">
+              <span class="file-link" @click.stop="previewFile(currentRow.fileId, currentRow.fileName)">
+                <el-icon><Document /></el-icon>
+                {{ currentRow.fileName }}
+              </span>
+            </el-tooltip>
             <span v-else style="color:#c0c4cc">无</span>
           </el-descriptions-item>
         </el-descriptions>
@@ -274,8 +280,8 @@
         <template v-if="currentRow.status === 'PENDING' && !isStudent">
           <el-divider />
           <div class="review-action">
-            <el-button type="success" :loading="reviewLoading" @click="handleReview('PASSED')">通过</el-button>
-            <el-button type="danger" :loading="reviewLoading" @click="handleReview('FAILED')">驳回</el-button>
+            <el-button type="success" link :loading="reviewLoading" @click="handleReview('PASSED')">通过</el-button>
+            <el-button type="danger" link :loading="reviewLoading" @click="handleReview('FAILED')">驳回</el-button>
           </div>
         </template>
       </div>
@@ -309,7 +315,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Upload, Finished, Document, RefreshLeft } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { fetchMySelection, submitMidTerm, recallMidTerm, fetchAdminMidTermPage, fetchTeacherMidTermPage, reviewMidTerm } from '@/api/project'
+import { fetchMySelection, submitMidTerm, recallMidTerm, fetchAdminMidTermPage, fetchTeacherMidTermPage, reviewMidTerm, downloadDocFile } from '@/api/project'
 
 const store = useUserStore()
 
@@ -365,6 +371,32 @@ const submitFormRef = ref(null)
 const submitUploadRef = ref(null)
 const submitFileList = ref([])
 const pendingReviewRow = ref(null)
+
+// 文件预览
+async function previewFile(fileId, fileName) {
+  if (!fileId) {
+    ElMessage.warning('文件不存在')
+    return
+  }
+  try {
+    const res = await downloadDocFile(fileId)
+    if (!res) {
+      ElMessage.error('文件下载失败')
+      return
+    }
+    const blob = res instanceof Blob ? res : new Blob([res])
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    // 错误已在拦截器处理，这里静默
+  }
+}
 
 const submitForm = reactive({
   reportContent: '',
@@ -657,6 +689,19 @@ onMounted(async () => {
 
 .file-link:hover {
   color: #66b1ff;
+}
+
+.file-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .detail-panel {

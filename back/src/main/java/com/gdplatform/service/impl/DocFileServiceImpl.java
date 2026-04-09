@@ -94,7 +94,7 @@ public class DocFileServiceImpl implements DocFileService {
         docFile.setVersionNo(1);
         docFile.setCreateTime(LocalDateTime.now());
 
-        docFileMapper.insertDocFile(docFile);
+        docFileMapper.insert(docFile);
         return docFile.getFileId();
     }
 

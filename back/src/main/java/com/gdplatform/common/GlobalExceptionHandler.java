@@ -1,5 +1,7 @@
 package com.gdplatform.common;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -47,8 +50,17 @@ public class GlobalExceptionHandler {
         return R.fail(msg);
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public R<Void> dataIntegrity(DataIntegrityViolationException e) {
+        log.warn("数据约束冲突（外键/唯一约束等）", e);
+        String root = e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : e.getMessage();
+        return R.fail(500, root != null && !root.isBlank() ? root : "数据保存失败，请检查外键或唯一约束");
+    }
+
     @ExceptionHandler(Exception.class)
     public R<Void> other(Exception e) {
-        return R.fail(500, e.getMessage() != null ? e.getMessage() : "服务器错误");
+        log.error("未处理异常", e);
+        String msg = e.getMessage();
+        return R.fail(500, msg != null && !msg.isBlank() ? msg : "服务器错误");
     }
 }
