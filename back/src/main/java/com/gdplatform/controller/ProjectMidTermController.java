@@ -11,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/project/midterm")
 @RequiredArgsConstructor
@@ -22,12 +24,21 @@ public class ProjectMidTermController {
     // ==================== 学生端 ====================
 
     /**
-     * 学生：获取自己的中期检查信息
+     * 学生：获取自己的最新一条中期检查信息
      */
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('project:midterm:submit')")
     public R<MidTermResp> getMyMidTerm() {
         return R.ok(midTermService.getMyMidTerm());
+    }
+
+    /**
+     * 学生：获取自己的全部中期检查记录（历史列表）
+     */
+    @GetMapping("/my/list")
+    @PreAuthorize("hasAuthority('project:midterm:submit')")
+    public R<List<MidTermResp>> getMyMidTermList() {
+        return R.ok(midTermService.getMyMidTermList());
     }
 
     /**

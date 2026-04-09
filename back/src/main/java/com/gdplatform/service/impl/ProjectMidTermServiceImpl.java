@@ -101,20 +101,19 @@ public class ProjectMidTermServiceImpl implements ProjectMidTermService {
     @Override
     public MidTermResp getMyMidTerm() {
         SysUser user = SecurityUtils.currentUser();
-        LambdaQueryWrapper<ProjectSelection> q = Wrappers.<ProjectSelection>lambdaQuery()
-                .eq(ProjectSelection::getStudentId, user.getUserId())
-                .eq(ProjectSelection::getStatus, "APPROVED")
-                .orderByDesc(ProjectSelection::getCreateTime)
-                .last("LIMIT 1");
-        ProjectSelection sel = selectionMapper.selectOne(q);
-        if (sel == null) {
-            return null;
-        }
-        MidTermResp resp = midTermMapper.selectBySelectionId(sel.getSelectionId());
+        MidTermResp resp = midTermMapper.selectLatestByStudentId(user.getUserId());
         if (resp != null) {
             enrichStatusLabel(resp);
         }
         return resp;
+    }
+
+    @Override
+    public List<MidTermResp> getMyMidTermList() {
+        SysUser user = SecurityUtils.currentUser();
+        List<MidTermResp> list = midTermMapper.selectAllByStudentId(user.getUserId());
+        list.forEach(this::enrichStatusLabel);
+        return list;
     }
 
     @Override

@@ -21,6 +21,8 @@ public interface ProjectMidTermMapper {
 
     MidTermResp selectBySelectionId(@Param("selectionId") Long selectionId);
 
+    MidTermResp selectLatestByStudentId(@Param("studentId") Long studentId);
+
     List<MidTermResp> selectMidTermPage(@Param("req") MidTermPageReq req,
                                          @Param("offset") long offset,
                                          @Param("limit") long limit);
@@ -38,4 +40,6 @@ public interface ProjectMidTermMapper {
                                                    @Param("limit") long limit);
 
     long countMidTermPageForStudent(@Param("req") MidTermPageReq req);
+
+    List<MidTermResp> selectAllByStudentId(@Param("studentId") Long studentId);
 }

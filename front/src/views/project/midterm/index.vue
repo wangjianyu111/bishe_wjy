@@ -25,26 +25,21 @@
             <el-descriptions-item label="选题状态">
               <el-tag size="small" :type="selectionTagType(mySelection.status)">{{ mySelection.statusLabel }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="中期检查状态">
-              <el-tag size="small" :type="midtermTagType(myMidTerm?.status)">
-                {{ midtermStatusText(myMidTerm?.status) }}
-              </el-tag>
-            </el-descriptions-item>
           </el-descriptions>
         </div>
         <el-empty v-else description="您还没有审批通过的选题，无法提交中期检查" />
 
         <div v-if="mySelection?.status === 'APPROVED'" class="action-bar">
           <el-button
-            v-if="!myMidTerm || myMidTerm.status === 'FAILED'"
+            v-if="!myMidTermList.length || myMidTermList[0].status === 'FAILED'"
             type="primary"
             @click="openSubmitDialog"
           >
             <el-icon><Upload /></el-icon>
-            {{ myMidTerm?.status === 'FAILED' ? '重新提交中期检查' : '提交中期检查' }}
+            {{ myMidTermList.length && myMidTermList[0].status === 'FAILED' ? '重新提交中期检查' : '提交中期检查' }}
           </el-button>
           <el-button
-            v-if="myMidTerm && myMidTerm.status === 'PENDING'"
+            v-if="myMidTermList.length && myMidTermList[0].status === 'PENDING'"
             type="warning"
             @click="handleRecall"
           >
@@ -54,44 +49,66 @@
         </div>
       </el-card>
 
-      <!-- 审核结果展示 -->
-      <el-card v-if="myMidTerm && myMidTerm.status !== 'PENDING'" shadow="never" class="result-card">
+      <!-- 历史记录表格 -->
+      <el-card shadow="never" class="history-card">
         <template #header>
           <div class="card-header">
-            <span>审核结果</span>
-            <el-tag :type="midtermTagType(myMidTerm.status)">
-              {{ midtermStatusText(myMidTerm.status) }}
-            </el-tag>
+            <span>提交记录</span>
+            <span v-if="myMidTermList.length" class="record-count">共 {{ myMidTermList.length }} 条</span>
           </div>
         </template>
-        <div v-if="myMidTerm.status === 'FAILED'" class="result-content">
-          <el-alert
-            :title="`驳回原因：${myMidTerm.inspectComment || '未填写'}`"
-            type="error"
-            :closable="false"
-            show-icon
-          />
-        </div>
-        <div v-if="myMidTerm.status === 'PASSED'" class="result-content">
-          <el-alert
-            title="您的中期检查已通过审核"
-            type="success"
-            :closable="false"
-            show-icon
-          />
-        </div>
-
-        <el-descriptions v-if="myMidTerm.inspectComment" :column="2" border size="small" style="margin-top:16px">
-          <el-descriptions-item label="审核人">{{ myMidTerm.inspectorName || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="审核时间">{{ formatDate(myMidTerm.inspectTime) }}</el-descriptions-item>
-          <el-descriptions-item label="审核意见" :span="2">{{ myMidTerm.inspectComment }}</el-descriptions-item>
-        </el-descriptions>
-
-        <!-- 已上传的文件 -->
-        <div v-if="myMidTerm.fileName" class="file-info">
-          <el-icon><Document /></el-icon>
-          <span>已上传文件：{{ myMidTerm.fileName }}</span>
-        </div>
+        <el-table :data="myMidTermList" border stripe size="small" v-loading="loadingMyData">
+          <el-table-column label="序号" type="index" width="60" align="center" />
+          <el-table-column prop="createTime" label="提交时间" width="170">
+            <template #default="{ row }">
+              {{ formatDate(row.createTime) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag size="small" :type="midtermTagType(row.status)">
+                {{ midtermStatusText(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="报告内容" min-width="200">
+            <template #default="{ row }">
+              <span class="report-summary">{{ row.reportContent || '—' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="附件" width="130">
+            <template #default="{ row }">
+              <el-tooltip v-if="row.fileName" :content="`点击下载 ${row.fileName}`" placement="top" :show-after="300">
+                <span class="file-link" @click.stop="previewFile(row.fileId, row.fileName)">
+                  <el-icon><Document /></el-icon>
+                  <span class="file-name">{{ row.fileName }}</span>
+                </span>
+              </el-tooltip>
+              <span v-else style="color:#c0c4cc">无</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="审核时间" width="170">
+            <template #default="{ row }">
+              {{ formatDate(row.inspectTime) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="审核人" width="100">
+            <template #default="{ row }">
+              {{ row.inspectorName || '—' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="审核意见" min-width="160">
+            <template #default="{ row }">
+              <span class="inspect-comment">{{ row.inspectComment || '—' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" align="center">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="openHistoryDetail(row)">查看</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-empty v-if="!loadingMyData && !myMidTermList.length" description="暂无提交记录" style="padding: 40px 0" />
       </el-card>
     </template>
 
@@ -315,7 +332,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Upload, Finished, Document, RefreshLeft } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { fetchMySelection, submitMidTerm, recallMidTerm, fetchAdminMidTermPage, fetchTeacherMidTermPage, reviewMidTerm, downloadDocFile } from '@/api/project'
+import { fetchMySelection, submitMidTerm, recallMidTerm, fetchAdminMidTermPage, fetchTeacherMidTermPage, reviewMidTerm, downloadDocFile, fetchMyMidTermList } from '@/api/project'
 
 const store = useUserStore()
 
@@ -323,19 +340,26 @@ const isStudent = computed(() => store.user?.userType === 1)
 const isAdmin = computed(() => store.user?.userType === 3)
 
 // ======== 学生端 ========
+const loadingMyData = ref(false)
 const mySelection = ref(null)
-const myMidTerm = ref(null)
+const myMidTermList = ref([])
 
 async function loadMyData() {
+  loadingMyData.value = true
   try {
     mySelection.value = await fetchMySelection()
-    if (!mySelection.value) return
-    try {
-      myMidTerm.value = await fetchMyMidTerm()
-    } catch {
-      myMidTerm.value = null
+    if (!mySelection.value) {
+      myMidTermList.value = []
+      return
     }
-  } catch { /* handled by interceptor */ }
+    try {
+      myMidTermList.value = await fetchMyMidTermList()
+    } catch {
+      myMidTermList.value = []
+    }
+  } catch { /* handled by interceptor */ } finally {
+    loadingMyData.value = false
+  }
 }
 
 function midtermTagType(status) {
@@ -453,17 +477,23 @@ async function handleSubmitMidterm() {
 }
 
 async function handleRecall() {
-  if (!myMidTerm.value?.midId) return
+  const latest = myMidTermList.value[0]
+  if (!latest?.midId) return
   try {
     await ElMessageBox.confirm('确定要撤回中期检查吗？撤回后可重新提交。', '确认撤回', {
       confirmButtonText: '撤回',
       cancelButtonText: '取消',
       type: 'warning',
     })
-    await recallMidTerm(myMidTerm.value.midId)
+    await recallMidTerm(latest.midId)
     ElMessage.success('已成功撤回')
     await loadMyData()
   } catch { /* cancel */ }
+}
+
+function openHistoryDetail(row) {
+  currentRow.value = { ...row }
+  detailVisible.value = true
 }
 
 // ======== 管理员/教师端 ========
@@ -610,6 +640,36 @@ onMounted(async () => {
 
 .intro-card {
   margin-bottom: 16px;
+}
+
+.history-card {
+  margin-bottom: 16px;
+}
+
+.record-count {
+  font-size: 12px;
+  color: #909399;
+  font-weight: normal;
+}
+
+.report-summary {
+  color: #606266;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.inspect-comment {
+  color: #606266;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
 }
 
 .intro-title {

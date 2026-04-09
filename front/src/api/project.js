@@ -138,6 +138,10 @@ export function fetchMyMidTerm() {
   return http.get('/project/midterm/my')
 }
 
+export function fetchMyMidTermList() {
+  return http.get('/project/midterm/my/list')
+}
+
 export function submitMidTerm(data) {
   return http.post('/project/midterm', data)
 }

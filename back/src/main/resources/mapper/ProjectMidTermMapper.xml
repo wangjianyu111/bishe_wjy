@@ -203,6 +203,23 @@
         LIMIT 1
     </select>
 
+    <!-- 根据学生ID查询该学生的最新一条中期检查记录（JOIN方式，不依赖选题ID精确匹配） -->
+    <select id="selectLatestByStudentId" resultMap="MidTermRespMap">
+        <include refid="midTermBaseSelect"/>
+        AND s.student_id = #{studentId}
+        AND s.status = 'APPROVED'
+        ORDER BY m.mid_id DESC
+        LIMIT 1
+    </select>
+
+    <!-- 学生端：查询自己全部中期检查记录（展示历史，废弃状态可重新提交） -->
+    <select id="selectAllByStudentId" resultMap="MidTermRespMap">
+        <include refid="midTermBaseSelect"/>
+        AND s.student_id = #{studentId}
+        AND s.status = 'APPROVED'
+        ORDER BY m.create_time DESC
+    </select>
+
     <select id="selectById" resultType="com.gdplatform.entity.ProjectMidTerm">
         SELECT * FROM project_mid_term WHERE mid_id = #{midId}
     </select>

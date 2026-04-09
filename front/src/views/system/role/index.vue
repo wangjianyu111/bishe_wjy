@@ -81,6 +81,7 @@
     </el-alert>
     <el-scrollbar height="420px">
       <el-tree
+        v-if="permTree.length > 0"
         ref="permTreeRef"
         :data="permTree"
         :props="{ label: 'permName', children: 'children' }"
@@ -88,6 +89,7 @@
         show-checkbox
         default-expand-all
         check-strictly
+        :default-checked-keys="permDialog.checkedPermIds"
       >
         <template #default="{ data }">
           <span class="node-label">
@@ -106,7 +108,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { nextTick, reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   fetchRolePage,
@@ -151,7 +153,7 @@ const rules = {
 }
 
 // ---------- 权限分配弹窗 ----------
-const permDialog = reactive({ visible: false, roleId: null, roleName: '' })
+const permDialog = reactive({ visible: false, roleId: null, roleName: '', checkedPermIds: [] })
 const permTree = ref([])
 
 // ---------- 工具函数 ----------
@@ -260,14 +262,14 @@ async function openAssignPerm(row) {
   permDialog.roleId = row.roleId
   permDialog.roleName = row.roleName
   permDialog.visible = true
-  await loadPermTree()
-  try {
-    const roleData = await fetchRoleById(row.roleId)
-    await nextTick()
-    permTreeRef.value?.setCheckedKeys(roleData.permIds || [])
-  } catch {
-    permTreeRef.value?.setCheckedKeys([])
-  }
+  permDialog.checkedPermIds = []
+  permTree.value = []
+
+  const [roleData] = await Promise.all([
+    fetchRoleById(row.roleId),
+    loadPermTree(),
+  ])
+  permDialog.checkedPermIds = roleData.permIds || []
 }
 
 async function handleAssignSubmit() {
