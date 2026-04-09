@@ -212,8 +212,8 @@ public class ProjectSelectionServiceImpl implements ProjectSelectionService {
     }
 
     @Override
-    public List<TopicBankItemResp> listTopicBankByCampus(Long campusId, Long teacherId, String academicYear) {
-        return topicMapper.selectTopicBankByCampus(campusId, teacherId, academicYear);
+    public List<TopicBankItemResp> listTopicBankByCampus(Long campusId, String campusName, Long teacherId, String academicYear) {
+        return topicMapper.selectTopicBankByCampus(campusId, campusName, teacherId, academicYear);
     }
 
     @Override

@@ -203,3 +203,38 @@ export function fetchMidTermDetail(midId) {
 export function downloadDocFile(fileId) {
   return http.get(`/doc/file/download/${fileId}`, { responseType: 'blob' })
 }
+
+// ---------- 论文文档 ----------
+export function fetchMyThesis() {
+  return http.get('/project/thesis/my')
+}
+
+export function fetchMyThesisList() {
+  return http.get('/project/thesis/my/list')
+}
+
+export function submitThesis(formData) {
+  return http.post('/project/thesis', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export function recallThesis(thesisId) {
+  return http.put(`/project/thesis/recall/${thesisId}`)
+}
+
+export function fetchAdminThesisPage(params) {
+  return http.get('/project/thesis/admin/page', { params })
+}
+
+export function fetchTeacherThesisPage(params) {
+  return http.get('/project/thesis/teacher/page', { params })
+}
+
+export function reviewThesis(data) {
+  return http.put('/project/thesis/review', data)
+}
+
+export function fetchThesisDetail(thesisId) {
+  return http.get(`/project/thesis/${thesisId}`)
+}

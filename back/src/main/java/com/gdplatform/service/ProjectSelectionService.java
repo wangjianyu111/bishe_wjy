@@ -32,7 +32,7 @@ public interface ProjectSelectionService {
     List<TeacherResp> listTeachersByCampusName(String campusName);
 
     // 查询某个学校的题目库题目
-    List<TopicBankItemResp> listTopicBankByCampus(Long campusId, Long teacherId, String academicYear);
+    List<TopicBankItemResp> listTopicBankByCampus(Long campusId, String campusName, Long teacherId, String academicYear);
 
     // 查询所有校区（带是否有题目库标记）
     List<CampusResp> listCampuses();

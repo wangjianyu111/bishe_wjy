@@ -52,9 +52,10 @@ public class ProjectSelectionController {
     @PreAuthorize("hasAuthority('project:selection:apply')")
     public R<List<TopicBankItemResp>> listTopicBank(
             @RequestParam(required = false) Long campusId,
+            @RequestParam(required = false) String campusName,
             @RequestParam(required = false) Long teacherId,
             @RequestParam(required = false) String academicYear) {
-        return R.ok(selectionService.listTopicBankByCampus(campusId, teacherId, academicYear));
+        return R.ok(selectionService.listTopicBankByCampus(campusId, campusName, teacherId, academicYear));
     }
 
     /**

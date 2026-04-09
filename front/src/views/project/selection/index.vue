@@ -329,6 +329,7 @@ async function loadTopicBank() {
     topicList.value = await fetchTopicBank({
       teacherId: form.teacherId,
       academicYear: form.academicYear || undefined,
+      campusName: form.campusName?.trim() || undefined,
     })
   } finally {
     topicLoading.value = false
@@ -383,9 +384,13 @@ function nextStep() {
     ElMessage.warning('请先输入学年')
     return
   }
-  if (step.value === 1 && !form.teacherId) {
-    ElMessage.warning('请先选择指导教师')
-    return
+  if (step.value === 1) {
+    if (!form.teacherId) {
+      ElMessage.warning('请先选择指导教师')
+      return
+    }
+    // 进入选题步骤时主动加载题目库
+    loadTopicBank()
   }
   step.value++
 }

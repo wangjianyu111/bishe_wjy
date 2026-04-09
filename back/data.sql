@@ -320,16 +320,24 @@ CREATE TABLE proposal_report (
   CONSTRAINT fk_prop_inspector FOREIGN KEY (inspector_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='开题报告';
 
+DROP TABLE IF EXISTS thesis_document;
 CREATE TABLE thesis_document (
   thesis_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  selection_id BIGINT NOT NULL,
-  file_id BIGINT DEFAULT NULL,
-  status VARCHAR(20) DEFAULT 'DRAFT',
+  selection_id BIGINT NOT NULL COMMENT '选题ID',
+  student_id BIGINT NOT NULL COMMENT '学生ID',
+  report_content TEXT DEFAULT NULL COMMENT '论文说明文字',
+  file_id BIGINT DEFAULT NULL COMMENT '附件ID',
+  status VARCHAR(20) DEFAULT 'PENDING' COMMENT 'PENDING待审核 PASSED已通过 FAILED已驳回',
+  inspector_id BIGINT DEFAULT NULL COMMENT '审核人ID',
+  inspect_comment TEXT DEFAULT NULL COMMENT '审核意见',
+  inspect_time DATETIME DEFAULT NULL COMMENT '审核时间',
+  version_no INT DEFAULT 1 COMMENT '版本号',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_thesis_selection (selection_id),
-  CONSTRAINT fk_thesis_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
-  CONSTRAINT fk_thesis_file FOREIGN KEY (file_id) REFERENCES doc_file (file_id)
+  is_deleted TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+  KEY idx_thesis_selection (selection_id),
+  KEY idx_thesis_student (student_id),
+  CONSTRAINT fk_thesis_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='论文文档';
 
 CREATE TABLE archive_material (
@@ -568,7 +576,7 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (20, 0, '文档与材料管理',  'doc',                        1, '/doc',                  NULL,                  'FolderOpened',        3),
 (21, 20,'模板文件管理',    'doc:template',              2, '/doc/template',         'doc/template/index',     'Files',               1),
 (22, 20,'开题报告管理',    'doc:proposal',            2, '/doc/proposal',         'doc/proposal/index',      'Reading',             2),
-(23, 20,'论文文档管理',    'doc:thesis',                2, '/doc/thesis',           NULL,                  'DocumentCopy',        3),
+(23, 20,'论文文档管理',    'doc:thesis',            2, '/doc/thesis',         'doc/thesis/index',      'DocumentCopy',        4),
 (24, 20,'文档版本管理',    'doc:version',               2, '/doc/version',          NULL,                  'Collection',          4),
 (25, 20,'归档材料管理',    'doc:archive',               2, '/doc/archive',          NULL,                  'Box',                 5);
 
@@ -636,7 +644,8 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (120, 22,'提交开题报告','doc:proposal:submit',  4, 1),
 (143, 22,'审核开题报告','doc:proposal:review', 4, 2),
 (122, 23,'上传论文',   'doc:thesis:upload',    4, 1),
-(144, 24,'查看版本',   'doc:version:view',    4, 1),
+(148, 23,'提交论文',   'doc:thesis:submit',    4, 2),
+(149, 23,'审核论文',   'doc:thesis:review',   4, 3),
 (124, 25,'归档',       'doc:archive:archive', 4, 1),
 -- 成果
 (125, 31,'提交成果',   'achievement:submit:add', 4, 1),
@@ -674,7 +683,7 @@ SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147);
+(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149);
 
 -- 学生：只能访问与自己相关的模块（选题浏览、选题申请、项目进度、中期检查、文档、成果、指导）
 INSERT INTO sys_role_permission (role_id, perm_id)
@@ -682,7 +691,7 @@ SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147);
+(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148);
 
 INSERT INTO sys_config (config_key, config_value, remark) VALUES
 ('system.name', '大学生毕业设计审批一体化平台', '系统名称'),

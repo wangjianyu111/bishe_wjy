@@ -38,6 +38,7 @@ public interface ProjectTopicMapper extends BaseMapper<ProjectTopic> {
 
     List<TopicBankItemResp> selectTopicBankByCampus(
             @Param("campusId") Long campusId,
+            @Param("campusName") String campusName,
             @Param("teacherId") Long teacherId,
             @Param("academicYear") String academicYear);
 
