@@ -133,27 +133,29 @@
             border
             stripe
             size="small"
-            style="width: 100%"
+            style="width: 100%; border-radius: 8px; overflow: hidden"
             @row-click="selectTopic"
             :row-class-name="topicRowClass"
           >
-            <el-table-column prop="topicName" label="课题名称" min-width="200" />
-            <el-table-column prop="teacherName" label="指导教师" width="120">
+            <el-table-column label="课题名称" min-width="200" align="center" header-align="center">
               <template #default="{ row }">
-                {{ row.teacherName }}{{ row.teacherNo ? `(${row.teacherNo})` : '' }}
+                <el-tooltip :content="row.topicName" placement="top" :show-after="300" :enterable="false">
+                  <div class="topic-name-cell">
+                    <span class="topic-name">{{ row.topicName }}</span>
+                  </div>
+                </el-tooltip>
               </template>
             </el-table-column>
-            <el-table-column prop="maxStudents" label="可容纳" width="80" align="center" />
-            <el-table-column label="已选/上限" width="100" align="center">
+            <el-table-column label="名额" width="100" align="center" header-align="center">
               <template #default="{ row }">
                 <span :class="{ full: row.currentCount >= row.maxStudents }">
                   {{ row.currentCount }} / {{ row.maxStudents }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" width="80" align="center">
+            <el-table-column label="状态" width="90" align="center" header-align="center">
               <template #default="{ row }">
-                <el-tag size="small" :type="row.status === 'OPEN' ? 'success' : 'danger'">
+                <el-tag size="small" :type="row.status === 'OPEN' ? 'success' : 'danger'" effect="light">
                   {{ row.status === 'OPEN' ? '开放' : '关闭' }}
                 </el-tag>
               </template>
@@ -577,6 +579,25 @@ watch(() => form.academicYear, (val) => {
 
 .full {
   color: #f56c6c;
+  font-weight: 600;
+}
+
+.topic-name-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+}
+
+.topic-name {
+  font-weight: 600;
+  color: #303133;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .custom-topic-form {
