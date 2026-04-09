@@ -237,7 +237,7 @@ CREATE TABLE project_mid_term (
   selection_id BIGINT NOT NULL,
   report_content TEXT,
   file_id BIGINT DEFAULT NULL,
-  status VARCHAR(20) DEFAULT 'SUBMITTED' COMMENT 'SUBMITTED已交 PENDING待审 PASSED通过 FAILED不通过',
+  status VARCHAR(20) DEFAULT 'PENDING' COMMENT 'PENDING待审 PASSED通过 FAILED驳回',
   inspector_id BIGINT DEFAULT NULL COMMENT '检查人(教师/管理员)',
   inspect_comment VARCHAR(500) DEFAULT NULL,
   inspect_time DATETIME DEFAULT NULL,
@@ -555,7 +555,7 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (12, 10,'选题申请管理',    'project:selection',          2, '/project/selection',      'project/selection/index','EditPen',           2),
 (13, 10,'选题审批管理',    'project:approval',           2, '/project/approval',      'project/approval/index','CircleCheck',        3),
 (14, 10,'项目进度管理',    'project:progress',           2, '/project/progress',      'project/progress/index', 'TrendCharts',        4),
-(15, 10,'中期检查管理',    'project:midterm',            2, '/project/midterm',       NULL,                  'Finished',           5);
+(15, 10,'中期检查管理',    'project:midterm',            2, '/project/midterm',       'project/midterm/index',  'Finished',           5);
 
 -- （三）文档与材料管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES

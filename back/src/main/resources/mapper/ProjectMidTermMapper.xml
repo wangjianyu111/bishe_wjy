@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.ProjectMidTermMapper">
+
+    <resultMap id="MidTermRespMap" type="com.gdplatform.dto.MidTermResp">
+        <id column="mid_id" property="midId"/>
+        <result column="selection_id" property="selectionId"/>
+        <result column="report_content" property="reportContent"/>
+        <result column="file_id" property="fileId"/>
+        <result column="original_name" property="fileName"/>
+        <result column="status" property="status"/>
+        <result column="inspector_id" property="inspectorId"/>
+        <result column="inspector_name" property="inspectorName"/>
+        <result column="inspect_comment" property="inspectComment"/>
+        <result column="inspect_time" property="inspectTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="student_id" property="studentId"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="topic_id" property="topicId"/>
+        <result column="topic_name" property="topicName"/>
+        <result column="custom_topic_name" property="customTopicName"/>
+        <result column="is_custom_topic" property="isCustomTopic"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="teacher_no" property="teacherNo"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="selection_status" property="selectionStatus"/>
+    </resultMap>
+
+    <sql id="midTermBaseSelect">
+        SELECT
+            m.mid_id,
+            m.selection_id,
+            m.report_content,
+            m.file_id,
+            f.original_name,
+            m.status,
+            m.inspector_id,
+            ins.real_name AS inspector_name,
+            m.inspect_comment,
+            m.inspect_time,
+            m.create_time,
+            m.update_time,
+            s.student_id,
+            stu.real_name AS student_name,
+            stu.student_no,
+            s.topic_id,
+            t.topic_name,
+            s.custom_topic_name,
+            s.is_custom_topic,
+            s.teacher_id,
+            tea.real_name AS teacher_name,
+            tea.teacher_no,
+            s.campus_name,
+            s.academic_year,
+            s.status AS selection_status
+        FROM project_mid_term m
+        LEFT JOIN project_selection s ON m.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        LEFT JOIN sys_user tea ON s.teacher_id = tea.user_id AND tea.is_deleted = 0
+        LEFT JOIN sys_user ins ON m.inspector_id = ins.user_id AND ins.is_deleted = 0
+        LEFT JOIN doc_file f ON m.file_id = f.file_id AND f.is_deleted = 0
+        WHERE 1=1
+    </sql>
+
+    <!-- 管理员/教师端：分页查询 -->
+    <select id="selectMidTermPage" resultMap="MidTermRespMap">
+        <include refid="midTermBaseSelect"/>
+        AND s.status = 'APPROVED'
+        <if test="req.selectionId != null">
+            AND m.selection_id = #{req.selectionId}
+        </if>
+        <if test="req.campusName != null and req.campusName != ''">
+            AND s.campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        <if test="req.teacherId != null">
+            AND s.teacher_id = #{req.teacherId}
+        </if>
+        <if test="req.studentId != null">
+            AND s.student_id = #{req.studentId}
+        </if>
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND m.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+        ORDER BY m.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countMidTermPage" resultType="long">
+        SELECT COUNT(m.mid_id)
+        FROM project_mid_term m
+        LEFT JOIN project_selection s ON m.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        WHERE 1=1
+        AND s.status = 'APPROVED'
+        <if test="req.selectionId != null">
+            AND m.selection_id = #{req.selectionId}
+        </if>
+        <if test="req.campusName != null and req.campusName != ''">
+            AND s.campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        <if test="req.teacherId != null">
+            AND s.teacher_id = #{req.teacherId}
+        </if>
+        <if test="req.studentId != null">
+            AND s.student_id = #{req.studentId}
+        </if>
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND m.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+    </select>
+
+    <!-- 教师端：查询自己指导学生的中期检查 -->
+    <select id="selectMidTermPageForTeacher" resultMap="MidTermRespMap">
+        <include refid="midTermBaseSelect"/>
+        AND s.teacher_id = #{req.teacherId}
+        AND s.status = 'APPROVED'
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND m.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+        ORDER BY m.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countMidTermPageForTeacher" resultType="long">
+        SELECT COUNT(m.mid_id)
+        FROM project_mid_term m
+        LEFT JOIN project_selection s ON m.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON s.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic t ON s.topic_id = t.topic_id AND t.is_deleted = 0
+        WHERE 1=1
+        AND s.teacher_id = #{req.teacherId}
+        AND s.status = 'APPROVED'
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year = #{req.academicYear}
+        </if>
+        <if test="req.status != null and req.status != ''">
+            AND m.status = #{req.status}
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR t.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR s.custom_topic_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+    </select>
+
+    <!-- 学生端：查询自己的中期检查 -->
+    <select id="selectMidTermPageForStudent" resultMap="MidTermRespMap">
+        <include refid="midTermBaseSelect"/>
+        AND s.student_id = #{req.studentId}
+        AND s.status = 'APPROVED'
+        ORDER BY m.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countMidTermPageForStudent" resultType="long">
+        SELECT COUNT(m.mid_id)
+        FROM project_mid_term m
+        LEFT JOIN project_selection s ON m.selection_id = s.selection_id AND s.is_deleted = 0
+        WHERE 1=1
+        AND s.student_id = #{req.studentId}
+        AND s.status = 'APPROVED'
+    </select>
+
+    <!-- 根据选题ID查询中期检查（学生端详情） -->
+    <select id="selectBySelectionId" resultMap="MidTermRespMap">
+        <include refid="midTermBaseSelect"/>
+        AND m.selection_id = #{selectionId}
+    </select>
+
+    <select id="selectById" resultType="com.gdplatform.entity.ProjectMidTerm">
+        SELECT * FROM project_mid_term WHERE mid_id = #{midId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="midId">
+        INSERT INTO project_mid_term (
+            selection_id, report_content, file_id, status,
+            create_time
+        ) VALUES (
+            #{selectionId}, #{reportContent}, #{fileId}, #{status},
+            #{createTime}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE project_mid_term
+        SET status = #{status},
+            inspector_id = #{inspectorId},
+            inspect_comment = #{inspectComment},
+            inspect_time = #{inspectTime}
+        WHERE mid_id = #{midId}
+    </update>
+
+    <update id="deleteById">
+        DELETE FROM project_mid_term WHERE mid_id = #{midId}
+    </update>
+
+</mapper>

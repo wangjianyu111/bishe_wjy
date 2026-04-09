@@ -132,3 +132,32 @@ export function downloadTemplate(templateId) {
 export function fetchTemplateDetail(templateId) {
   return http.get(`/doc/template/${templateId}`)
 }
+
+// ---------- 中期检查 ----------
+export function fetchMyMidTerm() {
+  return http.get('/project/midterm/my')
+}
+
+export function submitMidTerm(data) {
+  return http.post('/project/midterm', data)
+}
+
+export function recallMidTerm(midId) {
+  return http.put(`/project/midterm/recall/${midId}`)
+}
+
+export function fetchAdminMidTermPage(params) {
+  return http.get('/project/midterm/admin/page', { params })
+}
+
+export function fetchTeacherMidTermPage(params) {
+  return http.get('/project/midterm/teacher/page', { params })
+}
+
+export function reviewMidTerm(data) {
+  return http.put('/project/midterm/review', data)
+}
+
+export function fetchMidTermDetail(midId) {
+  return http.get(`/project/midterm/${midId}`)
+}
