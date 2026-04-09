@@ -30,13 +30,9 @@
         <el-empty v-else description="您还没有审批通过的选题，无法提交中期检查" />
 
         <div v-if="mySelection?.status === 'APPROVED'" class="action-bar">
-          <el-button
-            v-if="!myMidTermList.length || myMidTermList[0].status === 'FAILED'"
-            type="primary"
-            @click="openSubmitDialog"
-          >
+          <el-button type="primary" @click="handleStudentSubmitClick">
             <el-icon><Upload /></el-icon>
-            {{ myMidTermList.length && myMidTermList[0].status === 'FAILED' ? '重新提交中期检查' : '提交中期检查' }}
+            {{ studentSubmitButtonLabel }}
           </el-button>
           <el-button
             v-if="myMidTermList.length && myMidTermList[0].status === 'PENDING'"
@@ -353,13 +349,38 @@ async function loadMyData() {
       return
     }
     try {
-      myMidTermList.value = await fetchMyMidTermList()
+      const res = await fetchMyMidTermList()
+      myMidTermList.value = Array.isArray(res) ? res : []
     } catch {
       myMidTermList.value = []
     }
   } catch { /* handled by interceptor */ } finally {
     loadingMyData.value = false
   }
+}
+
+/** 学生端：列表按时间倒序，第一条为当前有效记录 */
+const latestStudentMidTerm = computed(() => myMidTermList.value[0] ?? null)
+
+const studentSubmitButtonLabel = computed(() => {
+  const latest = latestStudentMidTerm.value
+  if (!latest) return '提交中期检查'
+  if (String(latest.status || '').toUpperCase() === 'FAILED') return '重新提交中期检查'
+  return '提交中期检查'
+})
+
+function handleStudentSubmitClick() {
+  const latest = latestStudentMidTerm.value
+  const st = latest?.status ? String(latest.status).toUpperCase() : ''
+  if (st === 'PASSED') {
+    ElMessage.warning('您已通过中期检查审核，无需再次上传')
+    return
+  }
+  if (st === 'PENDING') {
+    ElMessage.warning('当前有一份材料正在审核中，请先点击「撤回提交」后再重新上传')
+    return
+  }
+  openSubmitDialog()
 }
 
 function midtermTagType(status) {
