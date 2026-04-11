@@ -51,3 +51,35 @@ export function fetchGuidanceDetail(guideId) {
 export function fetchGuidanceStats(studentId) {
   return http.get('/guidance/record/stats', { params: { studentId } })
 }
+
+// ---------- 教师反馈管理 ----------
+
+// 教师提交反馈
+export function submitTeacherFeedback(data) {
+  return http.post('/guidance/feedback', data)
+}
+
+// 管理员分页查询
+export function fetchAdminFeedbackPage(params) {
+  return http.get('/guidance/feedback/admin/page', { params })
+}
+
+// 教师分页查询
+export function fetchTeacherFeedbackPage(params) {
+  return http.get('/guidance/feedback/teacher/page', { params })
+}
+
+// 管理员处理反馈
+export function handleTeacherFeedback(data) {
+  return http.put('/guidance/feedback/handle', data)
+}
+
+// 管理员统计
+export function fetchAdminFeedbackStats(params) {
+  return http.get('/guidance/feedback/stats/admin', { params })
+}
+
+// 教师统计
+export function fetchTeacherFeedbackStats(params) {
+  return http.get('/guidance/feedback/stats/teacher', { params })
+}

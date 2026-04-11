@@ -666,10 +666,23 @@ CREATE TABLE guidance_record (
 CREATE TABLE teacher_feedback (
   fb_id BIGINT PRIMARY KEY AUTO_INCREMENT,
   selection_id BIGINT NOT NULL,
+  student_id BIGINT DEFAULT NULL COMMENT '关联选题后自动填充',
   teacher_id BIGINT NOT NULL,
+  feedback_type VARCHAR(30) NOT NULL DEFAULT 'OTHER' COMMENT 'TEACHING_QUALITY教学质量 STUDENT_ISSUE学生问题 SYSTEM_IMPROVE系统改进 RESOURCE_LACK资源不足 OTHER其他',
   content TEXT NOT NULL,
-  feedback_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING待处理 HANDLING处理中 RESOLVED已解决 REJECTED已驳回',
+  handler_id BIGINT DEFAULT NULL COMMENT '处理人ID',
+  handle_comment TEXT DEFAULT NULL COMMENT '处理意见',
+  handle_time DATETIME DEFAULT NULL,
+  academic_year VARCHAR(20) DEFAULT NULL COMMENT '学年',
+  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  is_deleted TINYINT DEFAULT 0,
+  KEY idx_fb_teacher (teacher_id),
   KEY idx_fb_selection (selection_id),
+  KEY idx_fb_status (status),
+  KEY idx_fb_type (feedback_type),
+  KEY idx_fb_academic_year (academic_year),
   CONSTRAINT fk_fb_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
   CONSTRAINT fk_fb_teacher FOREIGN KEY (teacher_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教师反馈';
@@ -808,7 +821,7 @@ ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_n
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
 (40, 0, '指导与质量监控',  'guidance',                   1, '/guidance',             NULL,                  'ChatDotRound',        5),
 (41, 40,'指导记录管理',    'guidance:record',           2, '/guidance/record',      'guidance/record/index',   'Memo',                1),
-(42, 40,'教师反馈管理',    'guidance:feedback',         2, '/guidance/feedback',    NULL,                  'ChatLineRound',       2),
+(42, 40,'教师反馈管理',    'guidance:feedback',         2, '/guidance/feedback',    'guidance/feedback/index',  'ChatLineRound',       2),
 (43, 40,'质量预警管理',    'guidance:warning',          2, '/guidance/warning',     NULL,                  'Warning',             3),
 (44, 40,'指导关系管理',    'guidance:relation',          2, '/guidance/relation',    NULL,                  'Connection',          4)
 ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
@@ -901,7 +914,8 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (171, 34,'调整成绩',  'achievement:grade:adjust',4, NULL, NULL, NULL, 3),
 (172, 34,'锁定成绩',  'achievement:grade:lock',  4, NULL, NULL, NULL, 4),
 (173, 34,'成绩管理',  'achievement:grade:manage',4, NULL, NULL, NULL, 0),
-(174, 43,'发起预警',  'guidance:warning:add',  4, NULL, NULL, NULL, 1)
+(174, 43,'发起预警',  'guidance:warning:add',  4, NULL, NULL, NULL, 1),
+(175, 42,'处理反馈',  'guidance:feedback:handle',4, NULL, NULL, NULL, 2)
 ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
 -- ============================================================

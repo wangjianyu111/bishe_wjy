@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.TeacherFeedbackMapper">
+
+    <select id="selectPageForAdmin" resultType="com.gdplatform.dto.TeacherFeedbackResp">
+        SELECT
+            tf.fb_id AS fbId,
+            tf.selection_id AS selectionId,
+            tf.teacher_id AS teacherId,
+            u_t.real_name AS teacherName,
+            tf.student_id,
+            u_s.real_name AS studentName,
+            u_s.student_no AS studentNo,
+            CASE
+                WHEN ps.is_custom_topic = 1 THEN ps.custom_topic_name
+                ELSE pt.topic_name
+            END AS topicName,
+            tf.feedback_type AS feedbackType,
+            tf.content,
+            tf.status,
+            tf.handler_id AS handlerId,
+            u_h.real_name AS handlerName,
+            tf.handle_comment AS handleComment,
+            tf.handle_time AS handleTime,
+            tf.academic_year AS academicYear,
+            tf.create_time AS createTime
+        FROM teacher_feedback tf
+        LEFT JOIN sys_user u_t ON tf.teacher_id = u_t.user_id
+        LEFT JOIN sys_user u_s ON tf.student_id = u_s.user_id
+        LEFT JOIN project_selection ps ON tf.selection_id = ps.selection_id
+        LEFT JOIN project_topic pt ON ps.topic_id = pt.topic_id
+        LEFT JOIN sys_user u_h ON tf.handler_id = u_h.user_id
+        <where>
+            tf.is_deleted = 0
+            <if test="campusName != null and campusName != ''">
+                AND ps.campus_name LIKE CONCAT('%', #{campusName}, '%')
+            </if>
+            <if test="academicYear != null and academicYear != ''">
+                AND tf.academic_year = #{academicYear}
+            </if>
+            <if test="feedbackType != null and feedbackType != ''">
+                AND tf.feedback_type = #{feedbackType}
+            </if>
+            <if test="status != null and status != ''">
+                AND tf.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (u_t.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.student_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY tf.create_time DESC
+    </select>
+
+    <select id="selectPageForTeacher" resultType="com.gdplatform.dto.TeacherFeedbackResp">
+        SELECT
+            tf.fb_id AS fbId,
+            tf.selection_id AS selectionId,
+            tf.teacher_id AS teacherId,
+            u_t.real_name AS teacherName,
+            tf.student_id,
+            u_s.real_name AS studentName,
+            u_s.student_no AS studentNo,
+            CASE
+                WHEN ps.is_custom_topic = 1 THEN ps.custom_topic_name
+                ELSE pt.topic_name
+            END AS topicName,
+            tf.feedback_type AS feedbackType,
+            tf.content,
+            tf.status,
+            tf.handler_id AS handlerId,
+            u_h.real_name AS handlerName,
+            tf.handle_comment AS handleComment,
+            tf.handle_time AS handleTime,
+            tf.academic_year AS academicYear,
+            tf.create_time AS createTime
+        FROM teacher_feedback tf
+        LEFT JOIN sys_user u_t ON tf.teacher_id = u_t.user_id
+        LEFT JOIN sys_user u_s ON tf.student_id = u_s.user_id
+        LEFT JOIN project_selection ps ON tf.selection_id = ps.selection_id
+        LEFT JOIN project_topic pt ON ps.topic_id = pt.topic_id
+        LEFT JOIN sys_user u_h ON tf.handler_id = u_h.user_id
+        <where>
+            tf.is_deleted = 0
+            AND tf.teacher_id = #{teacherId}
+            <if test="academicYear != null and academicYear != ''">
+                AND tf.academic_year = #{academicYear}
+            </if>
+            <if test="feedbackType != null and feedbackType != ''">
+                AND tf.feedback_type = #{feedbackType}
+            </if>
+            <if test="status != null and status != ''">
+                AND tf.status = #{status}
+            </if>
+        </where>
+        ORDER BY tf.create_time DESC
+    </select>
+
+    <select id="countPageForAdmin" resultType="long">
+        SELECT COUNT(*)
+        FROM teacher_feedback tf
+        LEFT JOIN project_selection ps ON tf.selection_id = ps.selection_id
+        LEFT JOIN sys_user u_t ON tf.teacher_id = u_t.user_id
+        LEFT JOIN sys_user u_s ON tf.student_id = u_s.user_id
+        <where>
+            tf.is_deleted = 0
+            <if test="campusName != null and campusName != ''">
+                AND ps.campus_name LIKE CONCAT('%', #{campusName}, '%')
+            </if>
+            <if test="academicYear != null and academicYear != ''">
+                AND tf.academic_year = #{academicYear}
+            </if>
+            <if test="feedbackType != null and feedbackType != ''">
+                AND tf.feedback_type = #{feedbackType}
+            </if>
+            <if test="status != null and status != ''">
+                AND tf.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (u_t.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.student_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <select id="countPageForTeacher" resultType="long">
+        SELECT COUNT(*)
+        FROM teacher_feedback tf
+        <where>
+            tf.is_deleted = 0
+            AND tf.teacher_id = #{teacherId}
+            <if test="academicYear != null and academicYear != ''">
+                AND tf.academic_year = #{academicYear}
+            </if>
+            <if test="feedbackType != null and feedbackType != ''">
+                AND tf.feedback_type = #{feedbackType}
+            </if>
+            <if test="status != null and status != ''">
+                AND tf.status = #{status}
+            </if>
+        </where>
+    </select>
+
+</mapper>
