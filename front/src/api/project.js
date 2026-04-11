@@ -204,6 +204,10 @@ export function downloadDocFile(fileId) {
   return http.get(`/doc/file/download/${fileId}`, { responseType: 'blob' })
 }
 
+export function deleteDocFile(fileId) {
+  return http.delete(`/doc/file/${fileId}`)
+}
+
 // ---------- 论文文档 ----------
 export function fetchMyThesis() {
   return http.get('/project/thesis/my')
@@ -237,4 +241,66 @@ export function reviewThesis(data) {
 
 export function fetchThesisDetail(thesisId) {
   return http.get(`/project/thesis/${thesisId}`)
+}
+
+// ---------- 文档版本管理 ----------
+export function fetchMyVersionList(selectionId) {
+  return http.get('/project/doc-version/my/list', { params: { selectionId } })
+}
+
+export function submitVersion(formData) {
+  return http.post('/project/doc-version', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export function deleteVersion(versionId) {
+  return http.delete(`/project/doc-version/${versionId}`)
+}
+
+export function fetchAdminVersionPage(params) {
+  return http.get('/project/doc-version/admin/page', { params })
+}
+
+export function fetchTeacherVersionPage(params) {
+  return http.get('/project/doc-version/teacher/page', { params })
+}
+
+export function fetchVersionDetail(versionId) {
+  return http.get(`/project/doc-version/${versionId}`)
+}
+
+// ---------- 文档归档管理 ----------
+export function fetchMyArchiveList(selectionId) {
+  return http.get('/project/doc-archive/my/list', { params: { selectionId } })
+}
+
+export function checkArchiveSubmit(selectionId, stageName) {
+  return http.get('/project/doc-archive/check-submit', { params: { selectionId, stageName } })
+}
+
+export function submitArchive(formData) {
+  return http.post('/project/doc-archive', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export function recallArchive(archiveId) {
+  return http.put(`/project/doc-archive/recall/${archiveId}`)
+}
+
+export function fetchAdminArchivePage(params) {
+  return http.get('/project/doc-archive/admin/page', { params })
+}
+
+export function fetchTeacherArchivePage(params) {
+  return http.get('/project/doc-archive/teacher/page', { params })
+}
+
+export function reviewArchive(data) {
+  return http.put('/project/doc-archive/review', data)
+}
+
+export function fetchArchiveDetail(archiveId) {
+  return http.get(`/project/doc-archive/${archiveId}`)
 }

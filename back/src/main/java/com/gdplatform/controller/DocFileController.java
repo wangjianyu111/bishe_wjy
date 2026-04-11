@@ -3,6 +3,7 @@ package com.gdplatform.controller;
 import com.gdplatform.common.R;
 import com.gdplatform.entity.DocFile;
 import com.gdplatform.mapper.DocFileMapper;
+import com.gdplatform.service.DocFileService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.nio.file.Paths;
 public class DocFileController {
 
     private final DocFileMapper docFileMapper;
+    private final DocFileService docFileService;
 
     /**
      * 预览/下载文件（所有已登录用户均可访问）
@@ -56,5 +58,15 @@ public class DocFileController {
             log.error("文件下载失败，fileId={}", fileId, e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * 删除文件（管理员权限，物理删除 + 逻辑删除）
+     */
+    @DeleteMapping("/{fileId}")
+    @PreAuthorize("hasAuthority('doc:thesis:review')")
+    public R<Void> deleteFile(@PathVariable Long fileId) {
+        docFileService.deleteFile(fileId);
+        return R.ok();
     }
 }

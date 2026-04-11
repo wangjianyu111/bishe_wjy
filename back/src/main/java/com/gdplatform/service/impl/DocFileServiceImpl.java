@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -96,6 +97,29 @@ public class DocFileServiceImpl implements DocFileService {
 
         docFileMapper.insert(docFile);
         return docFile.getFileId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteFile(Long fileId) {
+        DocFile file = docFileMapper.selectByFileId(fileId);
+        if (file == null) {
+            throw new BizException("文件不存在");
+        }
+        Path path = Paths.get(file.getFilePath());
+        if (Files.exists(path)) {
+            try {
+                Files.delete(path);
+            } catch (IOException e) {
+                log.warn("物理文件删除失败: {}", file.getFilePath());
+            }
+        }
+        docFileMapper.deleteById(fileId);
+    }
+
+    @Override
+    public DocFile getFileInfo(Long fileId) {
+        return docFileMapper.selectByFileId(fileId);
     }
 
     private String getFileExtension(String filename) {

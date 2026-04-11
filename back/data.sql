@@ -5,6 +5,75 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================
+-- 文档归档表
+-- ============================================================
+DROP TABLE IF EXISTS doc_archive;
+CREATE TABLE doc_archive (
+    archive_id       BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '归档ID',
+    selection_id     BIGINT NOT NULL COMMENT '选题ID',
+    student_id       BIGINT NOT NULL COMMENT '学生ID',
+    stage_name       VARCHAR(100) NOT NULL COMMENT '归档阶段名称',
+    file_id          BIGINT DEFAULT NULL COMMENT '附件ID',
+    remark           VARCHAR(500) DEFAULT NULL COMMENT '备注说明',
+    status           VARCHAR(20) NOT NULL DEFAULT 'SUBMITTED' COMMENT '状态：SUBMITTED待审核 PASSED已通过 FAILED已驳回',
+    reviewer_id      BIGINT DEFAULT NULL COMMENT '审核人ID',
+    reviewer_name    VARCHAR(50) DEFAULT NULL COMMENT '审核人姓名',
+    review_comment   VARCHAR(500) DEFAULT NULL COMMENT '审核意见',
+    review_time      DATETIME DEFAULT NULL COMMENT '审核时间',
+    create_time      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    is_deleted       TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+    KEY idx_selection (selection_id),
+    KEY idx_student (student_id),
+    KEY idx_stage (stage_name),
+    KEY idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文档归档表';
+
+-- ============================================================
+-- 文档版本表（保留）
+-- ============================================================
+DROP TABLE IF EXISTS doc_version;
+CREATE TABLE doc_version (
+    version_id       BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '版本ID',
+    selection_id     BIGINT NOT NULL COMMENT '选题ID',
+    student_id       BIGINT NOT NULL COMMENT '学生ID',
+    stage_name       VARCHAR(100) NOT NULL COMMENT '阶段名称',
+    version_no       INT NOT NULL DEFAULT 1 COMMENT '版本号',
+    file_id          BIGINT DEFAULT NULL COMMENT '附件ID',
+    remark           VARCHAR(500) DEFAULT NULL COMMENT '备注说明',
+    status           VARCHAR(20) NOT NULL DEFAULT 'SUBMITTED' COMMENT '状态：SUBMITTED待审核 PASSED已通过 FAILED已驳回',
+    reviewer_id      BIGINT DEFAULT NULL COMMENT '审核人ID',
+    review_comment   VARCHAR(500) DEFAULT NULL COMMENT '审核意见',
+    review_time      DATETIME DEFAULT NULL COMMENT '审核时间',
+    create_time      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    is_deleted       TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+    KEY idx_selection (selection_id),
+    KEY idx_student (student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文档版本表';
+
+-- ============================================================
+-- 文档文件表
+-- ============================================================
+DROP TABLE IF EXISTS doc_file;
+CREATE TABLE doc_file (
+    file_id          BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '文件ID',
+    original_name    VARCHAR(255) NOT NULL COMMENT '原始文件名',
+    stored_name      VARCHAR(255) NOT NULL COMMENT '服务器文件名',
+    file_path        VARCHAR(500) NOT NULL COMMENT '文件存储路径',
+    file_size        BIGINT DEFAULT 0 COMMENT '文件大小（字节）',
+    mime_type        VARCHAR(100) DEFAULT NULL COMMENT '文件MIME类型',
+    uploader_id      BIGINT NOT NULL COMMENT '上传人ID',
+    biz_type         VARCHAR(50) DEFAULT NULL COMMENT '业务类型：ARCHIVE归档 VERSION版本',
+    biz_id           BIGINT DEFAULT NULL COMMENT '业务ID',
+    selection_id     BIGINT DEFAULT NULL COMMENT '选题ID',
+    version_no       INT DEFAULT 1 COMMENT '版本号',
+    create_time      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    is_deleted       TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+    KEY idx_biz (biz_type, biz_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文档文件表';
+
+-- ============================================================
 -- 模板文件表
 -- ============================================================
 CREATE TABLE IF NOT EXISTS sys_template_file (
@@ -290,17 +359,26 @@ ALTER TABLE doc_template ADD CONSTRAINT fk_tpl_file FOREIGN KEY (file_id) REFERE
 
 ALTER TABLE project_mid_term ADD CONSTRAINT fk_mid_file FOREIGN KEY (file_id) REFERENCES doc_file (file_id);
 
-CREATE TABLE doc_version (
-  version_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  file_id BIGINT NOT NULL COMMENT '当前文件',
-  prev_file_id BIGINT DEFAULT NULL,
-  version_no INT NOT NULL,
-  remark VARCHAR(255) DEFAULT NULL,
-  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-  KEY idx_dv_file (file_id),
-  CONSTRAINT fk_dv_file FOREIGN KEY (file_id) REFERENCES doc_file (file_id),
-  CONSTRAINT fk_dv_prev FOREIGN KEY (prev_file_id) REFERENCES doc_file (file_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文档版本链';
+CREATE TABLE IF NOT EXISTS doc_version (
+    version_id       BIGINT       AUTO_INCREMENT  PRIMARY KEY,
+    selection_id    BIGINT       NOT NULL        COMMENT '选题ID',
+    student_id      BIGINT       NOT NULL        COMMENT '学生ID',
+    stage_name      VARCHAR(100) NOT NULL        COMMENT '毕设阶段名称（如：开题报告、中期检查、论文定稿）',
+    version_no      INT          NOT NULL DEFAULT 1 COMMENT '版本号',
+    file_id         BIGINT       NULL            COMMENT '附件ID',
+    remark          VARCHAR(500) NULL            COMMENT '备注说明',
+    status          VARCHAR(20)  NOT NULL DEFAULT 'SUBMITTED' COMMENT '状态：SUBMITTED已提交/PASSED通过/FAILED驳回',
+    reviewer_id     BIGINT       NULL            COMMENT '审核人ID',
+    review_comment  VARCHAR(500) NULL            COMMENT '审核意见',
+    review_time     DATETIME     NULL            COMMENT '审核时间',
+    create_time     DATETIME     NOT NULL        COMMENT '创建时间',
+    update_time     DATETIME     NOT NULL        COMMENT '更新时间',
+    is_deleted      TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文档版本管理';
+
+INSERT INTO doc_version (version_id, selection_id, student_id, stage_name, version_no, file_id, remark, status, create_time, update_time)
+SELECT 1, 1, 3, '开题报告', 1, NULL, '测试版本', 'SUBMITTED', NOW(), NOW()
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM doc_version WHERE version_id = 1);
 
 CREATE TABLE proposal_report (
   proposal_id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -577,8 +655,8 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (21, 20,'模板文件管理',    'doc:template',              2, '/doc/template',         'doc/template/index',     'Files',               1),
 (22, 20,'开题报告管理',    'doc:proposal',            2, '/doc/proposal',         'doc/proposal/index',      'Reading',             2),
 (23, 20,'论文文档管理',    'doc:thesis',            2, '/doc/thesis',         'doc/thesis/index',      'DocumentCopy',        4),
-(24, 20,'文档版本管理',    'doc:version',               2, '/doc/version',          NULL,                  'Collection',          4),
-(25, 20,'归档材料管理',    'doc:archive',               2, '/doc/archive',          NULL,                  'Box',                 5);
+(24, 20,'文档版本管理',    'doc:version',               2, '/doc/version',          'doc/version/index',      'Collection',          4),
+(25, 20,'归档材料管理',    'doc:archive',               2, '/doc/archive',          'doc/archive/index',        'Box',                 5);
 
 -- （四）成果与审批管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
@@ -647,6 +725,8 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (148, 23,'提交论文',   'doc:thesis:submit',    4, 2),
 (149, 23,'审核论文',   'doc:thesis:review',   4, 3),
 (124, 25,'归档',       'doc:archive:archive', 4, 1),
+(150, 24,'上传版本',  'doc:version:submit',  4, 1),
+(151, 24,'审核版本',  'doc:version:review',  4, 2),
 -- 成果
 (125, 31,'提交成果',   'achievement:submit:add', 4, 1),
 (126, 32,'安排答辩',   'achievement:defense:arrange',4,1),
@@ -667,7 +747,13 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (139, 21,'模板列表',   'doc:template:list',   4, 2),
 (140, 21,'编辑模板',   'doc:template:edit',  4, 3),
 (146, 21,'删除模板',   'doc:template:del',    4, 4),
-(147, 21,'下载模板',   'doc:template:download',4,5);
+(147, 21,'下载模板',   'doc:template:download',4,5),
+-- 归档管理
+(152, 24,'归档列表',   'doc:archive:list',  4, 1),
+(153, 24,'上传归档',   'doc:archive:submit', 4, 2),
+(154, 24,'撤回归档',   'doc:archive:recall', 4, 3),
+(155, 24,'审核归档',   'doc:archive:review', 4, 4),
+(156, 24,'下载归档',   'doc:archive:download',4,5);
 
 -- ============================================================
 -- 角色权限分配
@@ -683,7 +769,7 @@ SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149);
+(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156);
 
 -- 学生：只能访问与自己相关的模块（选题浏览、选题申请、项目进度、中期检查、文档、成果、指导）
 INSERT INTO sys_role_permission (role_id, perm_id)
@@ -691,13 +777,6 @@ SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148);
-
-INSERT INTO sys_config (config_key, config_value, remark) VALUES
-('system.name', '大学生毕业设计审批一体化平台', '系统名称'),
-('file.upload.path', './uploads', '本地上传目录');
-
-INSERT INTO project_topic (topic_id, topic_name, teacher_id, academic_year, max_students, current_count, status, description, campus_id, campus_name) VALUES
-(1, '基于SpringBoot的毕设管理系统设计与实现', 2, '2024-2025', 1, 0, 'OPEN', 'Web全栈', 1, '广州大学城校区');
+(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156);
 
 SET FOREIGN_KEY_CHECKS = 1;

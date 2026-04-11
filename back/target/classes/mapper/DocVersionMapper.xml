@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.DocVersionMapper">
+
+    <resultMap id="VersionRespMap" type="com.gdplatform.dto.VersionResp">
+        <id column="version_id" property="versionId"/>
+        <result column="selection_id" property="selectionId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="stage_name" property="stageName"/>
+        <result column="version_no" property="versionNo"/>
+        <result column="file_id" property="fileId"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="mime_type" property="mimeType"/>
+        <result column="remark" property="remark"/>
+        <result column="status" property="status"/>
+        <result column="reviewer_id" property="reviewerId"/>
+        <result column="reviewer_name" property="reviewerName"/>
+        <result column="review_comment" property="reviewComment"/>
+        <result column="review_time" property="reviewTime"/>
+        <result column="topic_id" property="topicId"/>
+        <result column="topic_name" property="topicName"/>
+        <result column="custom_topic_name" property="customTopicName"/>
+        <result column="is_custom_topic" property="isCustomTopic"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="teacher_no" property="teacherNo"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="versionBaseSelect">
+        SELECT
+            v.version_id,
+            v.selection_id,
+            v.student_id,
+            stu.real_name AS student_name,
+            stu.student_no,
+            v.stage_name,
+            v.version_no,
+            v.file_id,
+            f.original_name AS file_name,
+            f.file_size,
+            f.mime_type,
+            v.remark,
+            v.status,
+            v.reviewer_id,
+            rev.real_name AS reviewer_name,
+            v.review_comment,
+            DATE_FORMAT(v.review_time, '%Y-%m-%d %H:%i:%s') AS review_time,
+            s.topic_id,
+            pt.topic_name,
+            s.custom_topic_name,
+            s.is_custom_topic,
+            s.teacher_id,
+            tea.real_name AS teacher_name,
+            tea.teacher_no,
+            s.campus_name,
+            s.academic_year,
+            DATE_FORMAT(v.create_time, '%Y-%m-%d %H:%i:%s') AS create_time,
+            DATE_FORMAT(v.update_time, '%Y-%m-%d %H:%i:%s') AS update_time
+        FROM doc_version v
+        LEFT JOIN project_selection s ON v.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON v.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic pt ON s.topic_id = pt.topic_id AND pt.is_deleted = 0
+        LEFT JOIN sys_user tea ON s.teacher_id = tea.user_id AND tea.is_deleted = 0
+        LEFT JOIN sys_user rev ON v.reviewer_id = rev.user_id AND rev.is_deleted = 0
+        LEFT JOIN doc_file f ON v.file_id = f.file_id AND f.is_deleted = 0
+        WHERE v.is_deleted = 0
+    </sql>
+
+    <select id="selectVersionPage" resultMap="VersionRespMap">
+        <include refid="versionBaseSelect"/>
+        <if test="req.selectionId != null">
+            AND v.selection_id = #{req.selectionId}
+        </if>
+        <if test="req.campusName != null and req.campusName != ''">
+            AND s.campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        <if test="req.teacherId != null">
+            AND s.teacher_id = #{req.teacherId}
+        </if>
+        <if test="req.studentId != null">
+            AND v.student_id = #{req.studentId}
+        </if>
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year LIKE CONCAT(#{req.academicYear}, '%')
+        </if>
+        <if test="req.stageName != null and req.stageName != ''">
+            AND v.stage_name LIKE CONCAT('%', #{req.stageName}, '%')
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR v.stage_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+        ORDER BY v.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countVersionPage" resultType="long">
+        SELECT COUNT(v.version_id)
+        FROM doc_version v
+        LEFT JOIN project_selection s ON v.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON v.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic pt ON s.topic_id = pt.topic_id AND pt.is_deleted = 0
+        WHERE v.is_deleted = 0
+        <if test="req.selectionId != null">
+            AND v.selection_id = #{req.selectionId}
+        </if>
+        <if test="req.campusName != null and req.campusName != ''">
+            AND s.campus_name LIKE CONCAT('%', #{req.campusName}, '%')
+        </if>
+        <if test="req.teacherId != null">
+            AND s.teacher_id = #{req.teacherId}
+        </if>
+        <if test="req.studentId != null">
+            AND v.student_id = #{req.studentId}
+        </if>
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year LIKE CONCAT(#{req.academicYear}, '%')
+        </if>
+        <if test="req.stageName != null and req.stageName != ''">
+            AND v.stage_name LIKE CONCAT('%', #{req.stageName}, '%')
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR v.stage_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+    </select>
+
+    <select id="selectVersionPageForTeacher" resultMap="VersionRespMap">
+        <include refid="versionBaseSelect"/>
+        AND s.teacher_id = #{req.teacherId}
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year LIKE CONCAT(#{req.academicYear}, '%')
+        </if>
+        <if test="req.stageName != null and req.stageName != ''">
+            AND v.stage_name LIKE CONCAT('%', #{req.stageName}, '%')
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR v.stage_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+        ORDER BY v.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countVersionPageForTeacher" resultType="long">
+        SELECT COUNT(v.version_id)
+        FROM doc_version v
+        LEFT JOIN project_selection s ON v.selection_id = s.selection_id AND s.is_deleted = 0
+        LEFT JOIN sys_user stu ON v.student_id = stu.user_id AND stu.is_deleted = 0
+        LEFT JOIN project_topic pt ON s.topic_id = pt.topic_id AND pt.is_deleted = 0
+        WHERE v.is_deleted = 0
+        AND s.teacher_id = #{req.teacherId}
+        <if test="req.academicYear != null and req.academicYear != ''">
+            AND s.academic_year LIKE CONCAT(#{req.academicYear}, '%')
+        </if>
+        <if test="req.stageName != null and req.stageName != ''">
+            AND v.stage_name LIKE CONCAT('%', #{req.stageName}, '%')
+        </if>
+        <if test="req.keyword != null and req.keyword != ''">
+            AND (stu.real_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR stu.student_no LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{req.keyword}, '%')
+                 OR v.stage_name LIKE CONCAT('%', #{req.keyword}, '%'))
+        </if>
+    </select>
+
+</mapper>
