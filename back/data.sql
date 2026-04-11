@@ -690,13 +690,25 @@ CREATE TABLE teacher_feedback (
 CREATE TABLE quality_warning (
   warn_id BIGINT PRIMARY KEY AUTO_INCREMENT,
   selection_id BIGINT NOT NULL,
+  teacher_id BIGINT NOT NULL COMMENT '发起预警的教师ID',
+  student_id BIGINT DEFAULT NULL COMMENT '关联学生ID',
   warn_level TINYINT NOT NULL DEFAULT 1 COMMENT '1提醒 2警告 3严重',
+  warn_type VARCHAR(30) NOT NULL DEFAULT 'OTHER' COMMENT 'NO_GUIDANCE长期未指导 DOC_DELAY文档提交滞后 PROGRESS_DELAY进度滞后 LOW_FREQUENCY指导频率不足 OTHER其他',
   reason VARCHAR(500) NOT NULL,
-  status VARCHAR(20) DEFAULT 'OPEN' COMMENT 'OPEN CLOSED',
-  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  status VARCHAR(20) DEFAULT 'OPEN' COMMENT 'OPEN已开启 CLOSED已关闭',
+  handler_id BIGINT DEFAULT NULL COMMENT '处理人ID',
+  handle_comment TEXT DEFAULT NULL COMMENT '处理意见',
   handle_time DATETIME DEFAULT NULL,
-  handler_id BIGINT DEFAULT NULL,
+  academic_year VARCHAR(20) DEFAULT NULL COMMENT '学年',
+  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  is_deleted TINYINT DEFAULT 0,
+  KEY idx_warn_teacher (teacher_id),
   KEY idx_warn_selection (selection_id),
+  KEY idx_warn_status (status),
+  KEY idx_warn_type (warn_type),
+  KEY idx_warn_level (warn_level),
+  KEY idx_warn_academic_year (academic_year),
   CONSTRAINT fk_warn_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
   CONSTRAINT fk_warn_handler FOREIGN KEY (handler_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='质量预警';
@@ -822,7 +834,7 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (40, 0, '指导与质量监控',  'guidance',                   1, '/guidance',             NULL,                  'ChatDotRound',        5),
 (41, 40,'指导记录管理',    'guidance:record',           2, '/guidance/record',      'guidance/record/index',   'Memo',                1),
 (42, 40,'教师反馈管理',    'guidance:feedback',         2, '/guidance/feedback',    'guidance/feedback/index',  'ChatLineRound',       2),
-(43, 40,'质量预警管理',    'guidance:warning',          2, '/guidance/warning',     NULL,                  'Warning',             3),
+(43, 40,'质量预警管理',    'guidance:warning',          2, '/guidance/warning',     'guidance/warning/index',     'Warning',             3),
 (44, 40,'指导关系管理',    'guidance:relation',          2, '/guidance/relation',    NULL,                  'Connection',          4)
 ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
@@ -915,7 +927,9 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (172, 34,'锁定成绩',  'achievement:grade:lock',  4, NULL, NULL, NULL, 4),
 (173, 34,'成绩管理',  'achievement:grade:manage',4, NULL, NULL, NULL, 0),
 (174, 43,'发起预警',  'guidance:warning:add',  4, NULL, NULL, NULL, 1),
-(175, 42,'处理反馈',  'guidance:feedback:handle',4, NULL, NULL, NULL, 2)
+(175, 43,'处理预警',  'guidance:warning:handle',4, NULL, NULL, NULL, 2),
+(176, 43,'删除预警',  'guidance:warning:del',  4, NULL, NULL, NULL, 3),
+(177, 42,'处理反馈',  'guidance:feedback:handle',4, NULL, NULL, NULL, 2)
 ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
 -- ============================================================
@@ -957,5 +971,145 @@ INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (1, 202);
 
 -- 教师拥有优秀成果管理权限（查看、认定、导出）
 INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (2, 202);
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================================
+-- 指导关系管理与答辩小组管理
+-- ============================================================
+
+-- 指导关系表：维护学生与指导教师之间的正式指导关系
+DROP TABLE IF EXISTS guidance_relation;
+CREATE TABLE guidance_relation (
+    relation_id     BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关系ID',
+    student_id      BIGINT NOT NULL COMMENT '学生ID',
+    student_name    VARCHAR(50) DEFAULT NULL COMMENT '学生姓名',
+    student_no      VARCHAR(32) DEFAULT NULL COMMENT '学号',
+    teacher_id      BIGINT NOT NULL COMMENT '指导教师ID',
+    teacher_name    VARCHAR(50) DEFAULT NULL COMMENT '教师姓名',
+    teacher_no      VARCHAR(32) DEFAULT NULL COMMENT '工号',
+    campus_id       BIGINT DEFAULT NULL COMMENT '学校ID',
+    campus_name     VARCHAR(100) DEFAULT NULL COMMENT '学校名称',
+    academic_year   VARCHAR(20) DEFAULT NULL COMMENT '学年',
+    status          VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE有效 TERMINATED已解除',
+    create_by       BIGINT DEFAULT NULL COMMENT '创建人ID',
+    create_by_name  VARCHAR(50) DEFAULT NULL COMMENT '创建人姓名',
+    create_time     DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    is_deleted      TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+    KEY idx_grd_student (student_id),
+    KEY idx_grd_teacher (teacher_id),
+    KEY idx_grd_year (academic_year),
+    KEY idx_grd_campus (campus_id),
+    KEY idx_grd_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='指导关系表';
+
+-- 指导关系申请表：双向申请流程
+DROP TABLE IF EXISTS guidance_relation_apply;
+CREATE TABLE guidance_relation_apply (
+    apply_id        BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '申请ID',
+    from_user_id    BIGINT NOT NULL COMMENT '申请方用户ID',
+    from_user_name  VARCHAR(50) DEFAULT NULL COMMENT '申请方姓名',
+    from_user_type  VARCHAR(20) NOT NULL COMMENT '申请方类型：TEACHER教师 STUDENT学生',
+    to_user_id      BIGINT NOT NULL COMMENT '接收方用户ID',
+    to_user_name    VARCHAR(50) DEFAULT NULL COMMENT '接收方姓名',
+    to_user_type    VARCHAR(20) NOT NULL COMMENT '接收方类型：TEACHER教师 STUDENT学生',
+    campus_id       BIGINT DEFAULT NULL COMMENT '学校ID',
+    campus_name     VARCHAR(100) DEFAULT NULL COMMENT '学校名称',
+    academic_year   VARCHAR(20) DEFAULT NULL COMMENT '学年',
+    message         VARCHAR(500) DEFAULT NULL COMMENT '申请留言',
+    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING待处理 APPROVED已同意 REJECTED已拒绝 CANCELLED已取消 EXPIRED已过期',
+    handle_by       BIGINT DEFAULT NULL COMMENT '处理人ID',
+    handle_by_name  VARCHAR(50) DEFAULT NULL COMMENT '处理人姓名',
+    handle_time     DATETIME DEFAULT NULL COMMENT '处理时间',
+    handle_comment  VARCHAR(500) DEFAULT NULL COMMENT '处理备注',
+    create_time     DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    is_deleted      TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+    KEY idx_gra_from (from_user_id),
+    KEY idx_gra_to (to_user_id),
+    KEY idx_gra_status (status),
+    KEY idx_gra_year (academic_year)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='指导关系申请表';
+
+-- 答辩小组表：教师创建的答辩评审小组
+DROP TABLE IF EXISTS defense_group;
+CREATE TABLE defense_group (
+    group_id        BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '小组ID',
+    group_name      VARCHAR(200) NOT NULL COMMENT '小组名称',
+    leader_id       BIGINT NOT NULL COMMENT '组长ID',
+    leader_name     VARCHAR(50) DEFAULT NULL COMMENT '组长姓名',
+    campus_id       BIGINT DEFAULT NULL COMMENT '学校ID',
+    campus_name     VARCHAR(100) DEFAULT NULL COMMENT '学校名称',
+    academic_year   VARCHAR(20) DEFAULT NULL COMMENT '学年',
+    status          VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE有效 DISSOLVED已解散',
+    create_by       BIGINT DEFAULT NULL COMMENT '创建人ID',
+    create_by_name  VARCHAR(50) DEFAULT NULL COMMENT '创建人姓名',
+    create_time     DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    is_deleted      TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+    KEY idx_dg_leader (leader_id),
+    KEY idx_dg_campus (campus_id),
+    KEY idx_dg_year (academic_year)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='答辩小组表';
+
+-- 答辩小组成员表：包含教师成员和学生成员
+DROP TABLE IF EXISTS defense_group_member;
+CREATE TABLE defense_group_member (
+    member_id       BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '成员ID',
+    group_id        BIGINT NOT NULL COMMENT '小组ID',
+    user_id         BIGINT NOT NULL COMMENT '用户ID',
+    user_name       VARCHAR(50) DEFAULT NULL COMMENT '用户姓名',
+    user_type       VARCHAR(20) NOT NULL COMMENT 'TEACHER教师 STUDENT学生',
+    campus_id       BIGINT DEFAULT NULL COMMENT '学校ID',
+    campus_name     VARCHAR(100) DEFAULT NULL COMMENT '学校名称',
+    create_by       BIGINT DEFAULT NULL COMMENT '添加人ID',
+    create_time     DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    is_deleted      TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+    KEY idx_dgm_group (group_id),
+    KEY idx_dgm_user (user_id),
+    KEY idx_dgm_type (user_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='答辩小组成员表';
+
+-- ============================================================
+-- 菜单及权限配置：指导关系管理 + 答辩小组管理
+-- ============================================================
+
+-- 指导关系管理（父级 perm_id=30）
+INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order)
+VALUES (203, 30, '指导关系管理', 'guidance:relation:list', 2, '/guidance/relation', 'guidance/relation/index', 'Connection', 6)
+ON DUPLICATE KEY UPDATE parent_id = 30, perm_name = '指导关系管理', perm_code = 'guidance:relation:list', path = '/guidance/relation', component = 'guidance/relation/index', icon = 'Connection', sort_order = 6;
+
+-- 指导关系按钮权限
+INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, sort_order)
+VALUES
+(204, 203, '查看', 'guidance:relation:view', 4, 1),
+(205, 203, '添加/申请', 'guidance:relation:add', 4, 2),
+(206, 203, '编辑', 'guidance:relation:edit', 4, 3),
+(207, 203, '删除/解绑', 'guidance:relation:del', 4, 4),
+(213, 203, '处理申请', 'guidance:relation:handle', 4, 5)
+ON DUPLICATE KEY UPDATE parent_id = 203;
+
+-- 管理员拥有全部权限
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (1, 203);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (1, 204);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (1, 205);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (1, 206);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (1, 207);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (1, 213);
+
+-- 教师拥有指导关系管理权限
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (2, 203);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (2, 204);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (2, 205);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (2, 206);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (2, 207);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (2, 213);
+
+-- 学生拥有查看自己指导关系权限
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (3, 203);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (3, 204);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (3, 205);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (3, 207);
 
 SET FOREIGN_KEY_CHECKS = 1;

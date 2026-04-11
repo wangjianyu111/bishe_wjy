@@ -14,6 +14,7 @@ import com.gdplatform.mapper.GradeEvaluationMapper;
 import com.gdplatform.mapper.GradeSummaryMapper;
 import com.gdplatform.mapper.ProjectSelectionMapper;
 import com.gdplatform.mapper.SysUserMapper;
+import com.gdplatform.service.DefenseGroupService;
 import com.gdplatform.service.GradeService;
 import com.gdplatform.service.NotificationService;
 import com.gdplatform.util.SecurityUtils;
@@ -35,6 +36,7 @@ public class GradeServiceImpl implements GradeService {
     private final ProjectSelectionMapper selectionMapper;
     private final SysUserMapper userMapper;
     private final NotificationService notificationService;
+    private final DefenseGroupService defenseGroupService;
 
     // 成绩等级阈值
     private static final BigDecimal LEVEL_EXCELLENT = new BigDecimal("90");
@@ -121,6 +123,23 @@ public class GradeServiceImpl implements GradeService {
         // 校验学校匹配（教师只能给本校学生打分）
         if (teacher.getCampusName() == null || !teacher.getCampusName().equals(sel.getCampusName())) {
             throw new BizException("您只能给本校的学生打分");
+        }
+
+        // 校验答辩小组权限：教师只能在答辩小组内给学生打分
+        List<Long> groupIds = defenseGroupService.getGroupIdsByTeacherId(teacher.getUserId(), sel.getAcademicYear());
+        if (groupIds == null || groupIds.isEmpty()) {
+            throw new BizException("您不在任何答辩小组中，无法给学生打分");
+        }
+        boolean hasPermission = false;
+        for (Long groupId : groupIds) {
+            List<Long> studentIds = defenseGroupService.getStudentIdsInGroup(groupId, sel.getStudentId());
+            if (studentIds != null && studentIds.contains(req.getStudentId())) {
+                hasPermission = true;
+                break;
+            }
+        }
+        if (!hasPermission) {
+            throw new BizException("该学生不在您的答辩小组中，无法录入成绩");
         }
 
         // 检查是否已锁定

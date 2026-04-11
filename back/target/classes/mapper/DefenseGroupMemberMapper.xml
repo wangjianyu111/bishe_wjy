@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.DefenseGroupMemberMapper">
+
+    <resultMap id="BaseResultMap" type="com.gdplatform.entity.DefenseGroupMember">
+        <id column="member_id" property="memberId"/>
+        <result column="group_id" property="groupId"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_name" property="userName"/>
+        <result column="user_type" property="userType"/>
+        <result column="campus_id" property="campusId"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <delete id="deleteByGroupId">
+        UPDATE defense_group_member SET is_deleted = 1 WHERE group_id = #{groupId}
+    </delete>
+
+    <select id="selectTeachersByGroupId" resultType="com.gdplatform.entity.DefenseGroupMember">
+        SELECT * FROM defense_group_member
+        WHERE is_deleted = 0 AND group_id = #{groupId} AND user_type = 'TEACHER'
+        ORDER BY create_time
+    </select>
+
+    <select id="selectStudentsByGroupId" resultType="com.gdplatform.entity.DefenseGroupMember">
+        SELECT * FROM defense_group_member
+        WHERE is_deleted = 0 AND group_id = #{groupId} AND user_type = 'STUDENT'
+        ORDER BY create_time
+    </select>
+
+</mapper>

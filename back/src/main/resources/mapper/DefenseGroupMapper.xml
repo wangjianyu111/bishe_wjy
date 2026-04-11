@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.DefenseGroupMapper">
+
+    <resultMap id="BaseResultMap" type="com.gdplatform.entity.DefenseGroup">
+        <id column="group_id" property="groupId"/>
+        <result column="group_name" property="groupName"/>
+        <result column="leader_id" property="leaderId"/>
+        <result column="leader_name" property="leaderName"/>
+        <result column="campus_id" property="campusId"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="status" property="status"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_by_name" property="createByName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectTeacherIdsByGroupId" resultType="java.lang.Long">
+        SELECT user_id FROM defense_group_member
+        WHERE is_deleted = 0 AND group_id = #{groupId} AND user_type = 'TEACHER'
+    </select>
+
+    <select id="selectStudentIdsByGroupId" resultType="java.lang.Long">
+        SELECT user_id FROM defense_group_member
+        WHERE is_deleted = 0 AND group_id = #{groupId} AND user_type = 'STUDENT'
+    </select>
+
+    <select id="selectGroupIdsByTeacherId" resultType="java.lang.Long">
+        SELECT DISTINCT dgm.group_id FROM defense_group_member dgm
+        INNER JOIN defense_group dg ON dgm.group_id = dg.group_id AND dg.is_deleted = 0
+        WHERE dgm.is_deleted = 0
+        AND dgm.user_id = #{teacherId}
+        AND dgm.user_type = 'TEACHER'
+        <if test="academicYear != null and academicYear != ''">
+            AND dg.academic_year = #{academicYear}
+        </if>
+    </select>
+
+    <select id="selectGroupIdsByLeader" resultType="java.lang.Long">
+        SELECT group_id FROM defense_group
+        WHERE is_deleted = 0 AND leader_id = #{leaderId}
+    </select>
+
+    <select id="selectStudentIdsByGroupIdAndStudent" resultType="java.lang.Long">
+        SELECT user_id FROM defense_group_member
+        WHERE is_deleted = 0 AND group_id = #{groupId} AND user_type = 'STUDENT'
+        <if test="studentId != null">
+            AND user_id = #{studentId}
+        </if>
+    </select>
+
+</mapper>

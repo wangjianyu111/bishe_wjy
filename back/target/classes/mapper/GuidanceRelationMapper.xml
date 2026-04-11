@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.GuidanceRelationMapper">
+
+    <resultMap id="BaseResultMap" type="com.gdplatform.entity.GuidanceRelation">
+        <id column="relation_id" property="relationId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="teacher_no" property="teacherNo"/>
+        <result column="campus_id" property="campusId"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="status" property="status"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_by_name" property="createByName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectStudentIdsByTeacherId" resultType="java.lang.Long">
+        SELECT student_id FROM guidance_relation
+        WHERE is_deleted = 0
+        <if test="teacherId != null">
+            AND teacher_id = #{teacherId}
+        </if>
+        <if test="academicYear != null and academicYear != ''">
+            AND academic_year = #{academicYear}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <select id="selectRelationIdByStudentAndYear" resultType="java.lang.Long">
+        SELECT relation_id FROM guidance_relation
+        WHERE is_deleted = 0
+        AND student_id = #{studentId}
+        AND academic_year = #{academicYear}
+    </select>
+
+</mapper>

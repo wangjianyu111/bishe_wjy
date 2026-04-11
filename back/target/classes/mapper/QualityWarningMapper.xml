@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.QualityWarningMapper">
+
+    <select id="selectPageForAdmin" resultType="com.gdplatform.dto.WarningResp">
+        SELECT
+            qw.warn_id AS warnId,
+            qw.selection_id AS selectionId,
+            qw.teacher_id AS teacherId,
+            u_t.real_name AS teacherName,
+            qw.student_id AS studentId,
+            u_s.real_name AS studentName,
+            u_s.student_no AS studentNo,
+            ps.campus_name AS campusName,
+            CASE
+                WHEN ps.is_custom_topic = 1 THEN ps.custom_topic_name
+                ELSE pt.topic_name
+            END AS topicName,
+            qw.warn_level AS warnLevel,
+            qw.warn_type AS warnType,
+            qw.reason,
+            qw.status,
+            qw.handler_id AS handlerId,
+            u_h.real_name AS handlerName,
+            qw.handle_comment AS handleComment,
+            qw.handle_time AS handleTime,
+            qw.academic_year AS academicYear,
+            DATE_FORMAT(qw.create_time, '%Y-%m-%d %H:%i:%s') AS createTime
+        FROM quality_warning qw
+        LEFT JOIN sys_user u_t ON qw.teacher_id = u_t.user_id
+        LEFT JOIN sys_user u_s ON qw.student_id = u_s.user_id
+        LEFT JOIN project_selection ps ON qw.selection_id = ps.selection_id
+        LEFT JOIN project_topic pt ON ps.topic_id = pt.topic_id
+        LEFT JOIN sys_user u_h ON qw.handler_id = u_h.user_id
+        <where>
+            qw.is_deleted = 0
+            <if test="campusName != null and campusName != ''">
+                AND ps.campus_name LIKE CONCAT('%', #{campusName}, '%')
+            </if>
+            <if test="academicYear != null and academicYear != ''">
+                AND qw.academic_year = #{academicYear}
+            </if>
+            <if test="warnType != null and warnType != ''">
+                AND qw.warn_type = #{warnType}
+            </if>
+            <if test="warnLevel != null">
+                AND qw.warn_level = #{warnLevel}
+            </if>
+            <if test="status != null and status != ''">
+                AND qw.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (u_t.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.student_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY qw.create_time DESC
+    </select>
+
+    <select id="selectPageForTeacher" resultType="com.gdplatform.dto.WarningResp">
+        SELECT
+            qw.warn_id AS warnId,
+            qw.selection_id AS selectionId,
+            qw.teacher_id AS teacherId,
+            u_t.real_name AS teacherName,
+            qw.student_id AS studentId,
+            u_s.real_name AS studentName,
+            u_s.student_no AS studentNo,
+            ps.campus_name AS campusName,
+            CASE
+                WHEN ps.is_custom_topic = 1 THEN ps.custom_topic_name
+                ELSE pt.topic_name
+            END AS topicName,
+            qw.warn_level AS warnLevel,
+            qw.warn_type AS warnType,
+            qw.reason,
+            qw.status,
+            qw.handler_id AS handlerId,
+            u_h.real_name AS handlerName,
+            qw.handle_comment AS handleComment,
+            qw.handle_time AS handleTime,
+            qw.academic_year AS academicYear,
+            DATE_FORMAT(qw.create_time, '%Y-%m-%d %H:%i:%s') AS createTime
+        FROM quality_warning qw
+        LEFT JOIN sys_user u_t ON qw.teacher_id = u_t.user_id
+        LEFT JOIN sys_user u_s ON qw.student_id = u_s.user_id
+        LEFT JOIN project_selection ps ON qw.selection_id = ps.selection_id
+        LEFT JOIN project_topic pt ON ps.topic_id = pt.topic_id
+        LEFT JOIN sys_user u_h ON qw.handler_id = u_h.user_id
+        <where>
+            qw.is_deleted = 0
+            <if test="teacherId != null">
+                AND qw.teacher_id = #{teacherId}
+            </if>
+            <if test="academicYear != null and academicYear != ''">
+                AND qw.academic_year = #{academicYear}
+            </if>
+            <if test="warnType != null and warnType != ''">
+                AND qw.warn_type = #{warnType}
+            </if>
+            <if test="warnLevel != null">
+                AND qw.warn_level = #{warnLevel}
+            </if>
+            <if test="status != null and status != ''">
+                AND qw.status = #{status}
+            </if>
+        </where>
+        ORDER BY qw.create_time DESC
+    </select>
+
+</mapper>

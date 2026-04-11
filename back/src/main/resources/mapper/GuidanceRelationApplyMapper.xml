@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.GuidanceRelationApplyMapper">
+
+    <resultMap id="BaseResultMap" type="com.gdplatform.entity.GuidanceRelationApply">
+        <id column="apply_id" property="applyId"/>
+        <result column="from_user_id" property="fromUserId"/>
+        <result column="from_user_name" property="fromUserName"/>
+        <result column="from_user_type" property="fromUserType"/>
+        <result column="to_user_id" property="toUserId"/>
+        <result column="to_user_name" property="toUserName"/>
+        <result column="to_user_type" property="toUserType"/>
+        <result column="campus_id" property="campusId"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="message" property="message"/>
+        <result column="status" property="status"/>
+        <result column="handle_by" property="handleBy"/>
+        <result column="handle_by_name" property="handleByName"/>
+        <result column="handle_time" property="handleTime"/>
+        <result column="handle_comment" property="handleComment"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectPendingApplyId" resultType="java.lang.Long">
+        SELECT apply_id FROM guidance_relation_apply
+        WHERE is_deleted = 0
+        AND from_user_id = #{fromUserId}
+        AND to_user_id = #{toUserId}
+        <if test="academicYear != null and academicYear != ''">
+            AND academic_year = #{academicYear}
+        </if>
+        AND status = 'PENDING'
+        LIMIT 1
+    </select>
+
+    <select id="selectPendingApplyIds" resultType="java.lang.Long">
+        SELECT apply_id FROM guidance_relation_apply
+        WHERE is_deleted = 0
+        AND to_user_id = #{toUserId}
+        AND status = 'PENDING'
+    </select>
+
+</mapper>
