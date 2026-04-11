@@ -909,6 +909,65 @@ CREATE TABLE `sys_operation_log`  (
 -- ----------------------------
 
 -- ----------------------------
+-- Table structure for sys_version
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_version`;
+CREATE TABLE `sys_version`  (
+  `version_id` bigint NOT NULL AUTO_INCREMENT COMMENT '版本ID',
+  `version_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '版本号，如 1.0.0',
+  `version_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '版本名称',
+  `app_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '应用类型：FRONTEND/BACKEND/APP',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'DEVELOPING' COMMENT '状态：DEVELOPING/RELEASED/ROLLBACKED/DEPRECATED',
+  `release_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'STABLE' COMMENT '发布类型：STABLE/BETA/CANARY',
+  `rollout_percent` int NULL DEFAULT 0 COMMENT '灰度发布百分比 0-100',
+  `changelog` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '更新日志',
+  `download_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '下载地址',
+  `min_compatible_version` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '最低兼容版本',
+  `feature_list` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '新功能列表（每行一个）',
+  `deployed_by` bigint NULL COMMENT '部署人用户ID',
+  `deployed_by_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '部署人姓名',
+  `deployed_time` datetime NULL COMMENT '部署时间',
+  `force_update` tinyint NULL DEFAULT 0 COMMENT '是否强制更新：0 否 1 是',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_deleted` tinyint NULL DEFAULT 0,
+  PRIMARY KEY (`version_id`) USING BTREE,
+  INDEX `idx_version_app`(`app_type` ASC) USING BTREE,
+  INDEX `idx_version_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '版本管理' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_version
+-- ----------------------------
+INSERT INTO `sys_version` VALUES (1, '1.0.0', 'V1.0.0 初始版本', 'FRONTEND', 'RELEASED', 'STABLE', 100, '系统初始版本，包含基础功能模块。\n1. 用户与权限管理\n2. 毕业设计项目管理\n3. 文档与材料管理\n4. 指导关系管理', 'https://example.com/download/v1.0.0.zip', NULL, '用户管理\n角色管理\n权限管理\n指导关系管理\n操作日志管理', 1, '管理员', '2026-04-12 01:00:00', 0, '2026-04-12 01:00:00', '2026-04-12 01:00:00', 0);
+INSERT INTO `sys_version` VALUES (2, '1.0.0', 'V1.0.0 初始版本', 'BACKEND', 'RELEASED', 'STABLE', 100, '后端服务初始版本。', NULL, NULL, NULL, 1, '管理员', '2026-04-12 01:00:00', 0, '2026-04-12 01:00:00', '2026-04-12 01:00:00', 0);
+
+-- ----------------------------
+-- Table structure for sys_version_rollout
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_version_rollout`;
+CREATE TABLE `sys_version_rollout`  (
+  `rollout_id` bigint NOT NULL AUTO_INCREMENT,
+  `version_id` bigint NOT NULL COMMENT '版本ID',
+  `rollout_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '操作类型：GRAY/ROLLBACK/FULL',
+  `rollout_percent` int NULL DEFAULT 100 COMMENT '发布百分比',
+  `rollout_status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'PENDING' COMMENT '状态：PENDING/IN_PROGRESS/COMPLETED/FAILED',
+  `rollout_time` datetime NULL COMMENT '执行时间',
+  `rollout_by` bigint NULL COMMENT '执行人ID',
+  `rollout_by_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '执行人姓名',
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '备注',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`rollout_id`) USING BTREE,
+  INDEX `idx_rollout_version`(`version_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '版本发布记录' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_version_rollout
+-- ----------------------------
+INSERT INTO `sys_version_rollout` VALUES (1, 1, 'FULL', 100, 'COMPLETED', '2026-04-12 01:00:00', 1, '管理员', '初始版本全量发布', '2026-04-12 01:00:00');
+INSERT INTO `sys_version_rollout` VALUES (2, 2, 'FULL', 100, 'COMPLETED', '2026-04-12 01:00:00', 1, '管理员', '初始版本全量发布', '2026-04-12 01:00:00');
+
+-- ----------------------------
 -- Table structure for sys_permission
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_permission`;
@@ -964,7 +1023,7 @@ INSERT INTO `sys_permission` VALUES (44, 40, '指导关系管理', 'guidance:rel
 INSERT INTO `sys_permission` VALUES (50, 0, '系统运维管理', 'sysops', 1, '/sysops', NULL, 'Tools', 6, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (51, 50, '系统参数管理', 'sysops:param', 2, '/sysops/param', NULL, 'Setting', 1, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (52, 50, '系统监控管理', 'sysops:monitor', 2, '/sysops/monitor', NULL, 'Monitor', 2, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
-INSERT INTO `sys_permission` VALUES (53, 50, '版本更新管理', 'sysops:version', 2, '/sysops/version', NULL, 'Refresh', 3, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
+INSERT INTO `sys_permission` VALUES (53, 50, '版本更新管理', 'sysops:version', 2, '/sysops/version', 'sysops/version/index', 'Refresh', 3, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (54, 50, '操作日志管理', 'sysops:log', 2, '/sysops/log', 'system/operation-log/index', 'List', 4, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (55, 0, '首页', 'dashboard', 2, '/dashboard', 'Dashboard', 'HomeFilled', 0, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (101, 2, '用户列表', 'sys:user:list', 4, NULL, NULL, NULL, 1, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);

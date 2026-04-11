@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.SysVersionMapper">
+
+    <select id="selectVersionPage" resultType="com.gdplatform.dto.VersionResp">
+        SELECT
+            version_id AS versionId,
+            version_code AS versionCode,
+            version_name AS versionName,
+            app_type AS appType,
+            status,
+            release_type AS releaseType,
+            rollout_percent AS rolloutPercent,
+            changelog,
+            download_url AS downloadUrl,
+            min_compatible_version AS minCompatibleVersion,
+            feature_list AS featureList,
+            deployed_by AS deployedBy,
+            deployed_by_name AS deployedByName,
+            deployed_time AS deployedTime,
+            force_update AS forceUpdate,
+            create_time AS createTime
+        FROM sys_version
+        <where>
+            is_deleted = 0
+            <if test="req.appType != null and req.appType != ''">
+                AND app_type = #{req.appType}
+            </if>
+            <if test="req.status != null and req.status != ''">
+                AND status = #{req.status}
+            </if>
+            <if test="req.keyword != null and req.keyword != ''">
+                AND (version_code LIKE CONCAT('%', #{req.keyword}, '%')
+                    OR version_name LIKE CONCAT('%', #{req.keyword}, '%')
+                    OR changelog LIKE CONCAT('%', #{req.keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

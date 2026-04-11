@@ -111,3 +111,28 @@ export function exportOperationLog(params) {
 export function deleteOperationLogBatch(ids) {
   return http.delete('/system/operation-log/batch', { data: ids })
 }
+
+// ---------- 版本更新 ----------
+export function fetchVersionPage(params) {
+  return http.get('/system/version/page', { params })
+}
+
+export function fetchVersionDetail(versionId) {
+  return http.get(`/system/version/${versionId}`)
+}
+
+export function fetchCurrentVersion(appType) {
+  return http.get('/system/version/current', { params: { appType } })
+}
+
+export function addVersion(data) {
+  return http.post('/system/version', data)
+}
+
+export function performVersionRollout(data) {
+  return http.post('/system/version/rollout', data)
+}
+
+export function deleteVersion(versionId) {
+  return http.delete(`/system/version/${versionId}`)
+}
