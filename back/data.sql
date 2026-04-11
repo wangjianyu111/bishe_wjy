@@ -627,8 +627,12 @@ CREATE TABLE guidance_relation (
   selection_id BIGINT NOT NULL,
   teacher_id BIGINT NOT NULL,
   rel_type VARCHAR(20) NOT NULL DEFAULT 'PRIMARY' COMMENT 'PRIMARY主指导 SECONDARY副指导',
+  academic_year VARCHAR(20) DEFAULT NULL COMMENT '学年',
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE有效 INACTIVE失效',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uk_guidance (selection_id, teacher_id, rel_type),
+  KEY idx_gr_teacher (teacher_id),
+  KEY idx_gr_selection (selection_id),
   CONSTRAINT fk_gr_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
   CONSTRAINT fk_gr_teacher FOREIGN KEY (teacher_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='指导关系';
@@ -638,11 +642,22 @@ CREATE TABLE guidance_record (
   selection_id BIGINT NOT NULL,
   teacher_id BIGINT NOT NULL,
   student_id BIGINT NOT NULL,
-  guide_time DATETIME NOT NULL,
-  place VARCHAR(200) DEFAULT NULL,
-  content TEXT NOT NULL,
+  guide_time DATETIME NOT NULL COMMENT '指导时间',
+  place VARCHAR(200) DEFAULT NULL COMMENT '指导地点',
+  duration_minutes INT DEFAULT NULL COMMENT '指导时长（分钟）',
+  guidance_type VARCHAR(20) NOT NULL DEFAULT 'GUIDANCE' COMMENT 'GUIDANCE指导 VISIT走访 GROUP座谈 ONLINE线上 OTHER其他',
+  content TEXT NOT NULL COMMENT '指导内容',
+  attachment_id BIGINT DEFAULT NULL COMMENT '附件ID（可选）',
+  student_feedback TEXT DEFAULT NULL COMMENT '学生反馈',
+  feedback_time DATETIME DEFAULT NULL COMMENT '学生反馈时间',
+  status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED' COMMENT 'DRAFT草稿 PUBLISHED已发布',
+  academic_year VARCHAR(20) DEFAULT NULL COMMENT '学年（从选题同步）',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_deleted TINYINT DEFAULT 0 COMMENT '0正常 1删除',
   KEY idx_guide_selection (selection_id),
+  KEY idx_guide_teacher (teacher_id),
+  KEY idx_guide_student (student_id),
   CONSTRAINT fk_guide_sel FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
   CONSTRAINT fk_guide_teacher FOREIGN KEY (teacher_id) REFERENCES sys_user (user_id),
   CONSTRAINT fk_guide_student FOREIGN KEY (student_id) REFERENCES sys_user (user_id)
@@ -758,7 +773,8 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (2,  1, '用户管理',        'sys:user',                   2, '/sys/user',             'system/user/index',       'User',                1),
 (3,  1, '角色管理',        'sys:role',                   2, '/sys/role',             'system/role/index',       'UserFilled',          2),
 (4,  1, '权限管理',        'sys:permission',              2, '/sys/permission',       'system/permission/index', 'Lock',                3),
-(5,  1, '消息通知管理',    'sys:notification',            2, '/sys/notification',     'sys/notification/index',  'Bell',                4);
+(5,  1, '消息通知管理',    'sys:notification',            2, '/sys/notification',     'sys/notification/index',  'Bell',                4)
+ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
 -- （二）毕业设计项目管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
@@ -767,7 +783,8 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (12, 10,'选题申请管理',    'project:selection',          2, '/project/selection',      'project/selection/index','EditPen',           2),
 (13, 10,'选题审批管理',    'project:approval',           2, '/project/approval',      'project/approval/index','CircleCheck',        3),
 (14, 10,'项目进度管理',    'project:progress',           2, '/project/progress',      'project/progress/index', 'TrendCharts',        4),
-(15, 10,'中期检查管理',    'project:midterm',            2, '/project/midterm',       'project/midterm/index',  'Finished',           5);
+(15, 10,'中期检查管理',    'project:midterm',            2, '/project/midterm',       'project/midterm/index',  'Finished',           5)
+ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
 -- （三）文档与材料管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
@@ -784,15 +801,17 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (31, 30,'成果提交管理',    'achievement:submit',         2, '/achievement/submit',   'achievement/submit/index', 'Upload',              1),
 (32, 30,'答辩安排管理',    'achievement:defense',        2, '/achievement/defense',  'achievement/defense/index', 'Microphone',          2),
 (33, 30,'审批意见管理',    'achievement:approval', 2, '/achievement/approval', 'achievement/approval/index', 'Select',              3),
-(34, 30,'成绩评审管理',    'achievement:grade',          2, '/achievement/grade',    'achievement/grade/index',      'Star',                4);
+(34, 30,'成绩评审管理',    'achievement:grade',          2, '/achievement/grade',    'achievement/grade/index',      'Star',                4)
+ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
 -- （五）指导与质量监控管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
 (40, 0, '指导与质量监控',  'guidance',                   1, '/guidance',             NULL,                  'ChatDotRound',        5),
-(41, 40,'指导记录管理',    'guidance:record',           2, '/guidance/record',      NULL,                  'Memo',                1),
+(41, 40,'指导记录管理',    'guidance:record',           2, '/guidance/record',      'guidance/record/index',   'Memo',                1),
 (42, 40,'教师反馈管理',    'guidance:feedback',         2, '/guidance/feedback',    NULL,                  'ChatLineRound',       2),
 (43, 40,'质量预警管理',    'guidance:warning',          2, '/guidance/warning',     NULL,                  'Warning',             3),
-(44, 40,'指导关系管理',    'guidance:relation',          2, '/guidance/relation',    NULL,                  'Connection',          4);
+(44, 40,'指导关系管理',    'guidance:relation',          2, '/guidance/relation',    NULL,                  'Connection',          4)
+ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
 -- （六）系统运维管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
@@ -800,7 +819,8 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (51, 50,'系统参数管理',   'sysops:param',              2, '/sysops/param',         NULL,                  'Setting',             1),
 (52, 50,'系统监控管理',   'sysops:monitor',            2, '/sysops/monitor',       NULL,                  'Monitor',             2),
 (53, 50,'版本更新管理',   'sysops:version',            2, '/sysops/version',       NULL,                  'Refresh',             3),
-(54, 50,'操作日志管理',   'sysops:log',                2, '/sysops/log',           NULL,                  'List',                4);
+(54, 50,'操作日志管理',   'sysops:log',                2, '/sysops/log',           NULL,                  'List',                4)
+ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
 -- 首页（Dashboard）
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
@@ -809,131 +829,119 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 -- ============================================================
 -- 接口级权限（按钮/接口级别，perm_type=4，后端接口鉴权用）
 -- ============================================================
-INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, sort_order) VALUES
--- 用户管理
-(101, 2, '用户列表',   'sys:user:list',   4, 1),
-(102, 2, '用户新增',   'sys:user:add',    4, 2),
-(103, 2, '用户编辑',   'sys:user:edit',   4, 3),
-(104, 2, '用户删除',   'sys:user:del',    4, 4),
--- 角色管理
-(105, 3, '角色列表',   'sys:role:list',   4, 1),
-(106, 3, '角色新增',   'sys:role:add',    4, 2),
-(107, 3, '角色编辑',   'sys:role:edit',   4, 3),
-(108, 3, '角色删除',   'sys:role:del',    4, 4),
-(109, 3, '分配权限',   'sys:role:assign', 4, 5),
--- 课题管理
-(110, 11,'课题发布',   'project:topic:add',    4, 1),
-(111, 11,'课题编辑',   'project:topic:edit',   4, 2),
-(112, 11,'课题删除',   'project:topic:del',    4, 3),
-(141, 11,'课题列表',   'project:topic:list',    4, 4),
--- 选题管理
-(113, 12,'提交申请',   'project:selection:apply', 4, 1),
-(114, 12,'撤回申请',   'project:selection:recall',4, 2),
-(145, 12,'选题列表',   'project:selection:list', 4, 3),
--- 审批管理
-(115, 13,'通过选题',   'project:approval:pass',  4, 1),
-(116, 13,'驳回选题',   'project:approval:reject',4, 2),
--- 中期检查
-(117, 15,'提交中期报告','project:midterm:submit', 4, 1),
-(118, 15,'审核中期检查','project:midterm:review', 4, 2),
--- 文档
-(119, 21,'上传模板',   'doc:template:upload',  4, 1),
-(120, 22,'提交开题报告','doc:proposal:submit',  4, 1),
-(143, 22,'审核开题报告','doc:proposal:review', 4, 2),
-(122, 23,'上传论文',   'doc:thesis:upload',    4, 1),
-(148, 23,'提交论文',   'doc:thesis:submit',    4, 2),
-(149, 23,'审核论文',   'doc:thesis:review',   4, 3),
-(124, 25,'归档',       'doc:archive:archive', 4, 1),
-(150, 24,'上传版本',  'doc:version:submit',  4, 1),
-(151, 24,'审核版本',  'doc:version:review',  4, 2),
--- 成果
-(125, 31,'成果管理',   'achievement:submit:manage', 4, 1),
-(126, 32,'安排答辩',   'achievement:defense:arrange',4,1),
-(127, 33,'审批',       'achievement:approval:do',  4, 1),
-(169, 34,'成绩查看',  'achievement:grade:view',   4, 1),
-(170, 34,'录入成绩',  'achievement:grade:input',  4, 2),
-(171, 34,'调整成绩',  'achievement:grade:adjust',4, 3),
-(172, 34,'锁定成绩',  'achievement:grade:lock',  4, 4),
-(173, 34,'成绩管理',  'achievement:grade:manage',4, 0),
-(129, 35,'评定优秀',   'achievement:excellent:add', 4, 1),
--- 答辩权限
-(161, 32,'答辩列表',  'achievement:defense:list',  4, 1),
-(162, 32,'查看明细',  'achievement:defense:detail', 4, 2),
--- 指导
-(130, 41,'添加记录',   'guidance:record:add',   4, 1),
-(131, 42,'教师反馈',   'guidance:feedback:add', 4, 1),
-(132, 43,'发起预警',   'guidance:warning:add',  4, 1),
-(134, 44,'分配指导教师','guidance:relation:assign',4,1),
--- 成果提交
-(157, 31,'我的成果列表','achievement:submit:list',4,1),
-(158, 31,'成果上传',   'achievement:submit:upload', 4, 2),
-(159, 31,'成果删除',   'achievement:submit:del', 4, 3),
-(160, 31,'成果下载',   'achievement:submit:download',4,4),
--- 进度管理
-(136, 14,'进度列表',   'project:progress:list', 4, 1),
-(142, 14,'添加进度',   'project:progress:add',  4, 2),
-(137, 14,'编辑进度',   'project:progress:edit', 4, 3),
-(138, 14,'删除进度',   'project:progress:del',  4, 4),
--- 模板管理
-(139, 21,'模板列表',   'doc:template:list',   4, 2),
-(140, 21,'编辑模板',   'doc:template:edit',  4, 3),
-(146, 21,'删除模板',   'doc:template:del',    4, 4),
-(147, 21,'下载模板',   'doc:template:download',4,5),
--- 归档管理
-(152, 24,'归档列表',   'doc:archive:list',  4, 1),
-(153, 24,'上传归档',   'doc:archive:submit', 4, 2),
-(154, 24,'撤回归档',   'doc:archive:recall', 4, 3),
-(155, 24,'审核归档',   'doc:archive:review', 4, 4),
-(156, 24,'下载归档',   'doc:archive:download',4,5),
--- 审批意见管理
-(163, 33,'查看意见',  'achievement:approval:view', 4, 1),
-(164, 33,'添加意见',  'achievement:approval:add',  4, 2),
-(165, 33,'编辑意见',  'achievement:approval:edit', 4, 3),
-(166, 33,'删除意见',  'achievement:approval:del',  4, 4),
-(167, 33,'更新状态',  'achievement:approval:status',4, 5),
-(168, 33,'审批管理',  'achievement:approval:manage',4, 0);
+INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
+(101, 2, '用户列表',   'sys:user:list',   4, NULL, NULL, NULL, 1),
+(102, 2, '用户新增',   'sys:user:add',    4, NULL, NULL, NULL, 2),
+(103, 2, '用户编辑',   'sys:user:edit',   4, NULL, NULL, NULL, 3),
+(104, 2, '用户删除',   'sys:user:del',    4, NULL, NULL, NULL, 4),
+(105, 3, '角色列表',   'sys:role:list',   4, NULL, NULL, NULL, 1),
+(106, 3, '角色新增',   'sys:role:add',    4, NULL, NULL, NULL, 2),
+(107, 3, '角色编辑',   'sys:role:edit',   4, NULL, NULL, NULL, 3),
+(108, 3, '角色删除',   'sys:role:del',    4, NULL, NULL, NULL, 4),
+(109, 3, '分配权限',   'sys:role:assign', 4, NULL, NULL, NULL, 5),
+(110, 11,'课题发布',   'project:topic:add',    4, NULL, NULL, NULL, 1),
+(111, 11,'课题编辑',   'project:topic:edit',   4, NULL, NULL, NULL, 2),
+(112, 11,'课题删除',   'project:topic:del',    4, NULL, NULL, NULL, 3),
+(113, 12,'提交申请',   'project:selection:apply', 4, NULL, NULL, NULL, 1),
+(114, 12,'撤回申请',   'project:selection:recall',4, NULL, NULL, NULL, 2),
+(115, 13,'通过选题',   'project:approval:pass',  4, NULL, NULL, NULL, 1),
+(116, 13,'驳回选题',   'project:approval:reject',4, NULL, NULL, NULL, 2),
+(117, 15,'提交中期报告','project:midterm:submit', 4, NULL, NULL, NULL, 1),
+(118, 15,'审核中期检查','project:midterm:review', 4, NULL, NULL, NULL, 2),
+(119, 21,'上传模板',   'doc:template:upload',  4, NULL, NULL, NULL, 1),
+(120, 22,'提交开题报告','doc:proposal:submit',  4, NULL, NULL, NULL, 1),
+(122, 23,'上传论文',   'doc:thesis:upload',    4, NULL, NULL, NULL, 1),
+(124, 25,'归档',       'doc:archive:archive', 4, NULL, NULL, NULL, 1),
+(125, 31,'成果管理',   'achievement:submit:manage', 4, NULL, NULL, NULL, 1),
+(126, 32,'安排答辩',   'achievement:defense:arrange',4, NULL, NULL, NULL, 1),
+(127, 33,'审批',       'achievement:approval:do',  4, NULL, NULL, NULL, 1),
+(128, 33,'审批管理',  'achievement:approval:manage',4, NULL, NULL, NULL, 0),
+(129, 35,'评定优秀',   'achievement:excellent:add', 4, NULL, NULL, NULL, 1),
+(130, 41,'添加记录',   'guidance:record:add',   4, NULL, NULL, NULL, 1),
+(131, 41,'查看记录',   'guidance:record:view',  4, NULL, NULL, NULL, 2),
+(132, 41,'编辑记录',   'guidance:record:edit',  4, NULL, NULL, NULL, 3),
+(133, 41,'删除记录',   'guidance:record:del',   4, NULL, NULL, NULL, 4),
+(134, 44,'分配指导教师','guidance:relation:assign',4, NULL, NULL, NULL, 1),
+(135, 42,'教师反馈',   'guidance:feedback:add', 4, NULL, NULL, NULL, 1),
+(136, 14,'进度列表',   'project:progress:list', 4, NULL, NULL, NULL, 1),
+(137, 41,'填写反馈',   'guidance:record:feedback', 4, NULL, NULL, NULL, 5),
+(138, 14,'删除进度',   'project:progress:del',  4, NULL, NULL, NULL, 4),
+(139, 21,'模板列表',   'doc:template:list',   4, NULL, NULL, NULL, 2),
+(140, 21,'编辑模板',   'doc:template:edit',  4, NULL, NULL, NULL, 3),
+(141, 11,'课题列表',   'project:topic:list',    4, NULL, NULL, NULL, 4),
+(142, 14,'添加进度',   'project:progress:add',  4, NULL, NULL, NULL, 2),
+(143, 22,'审核开题报告','doc:proposal:review', 4, NULL, NULL, NULL, 2),
+(144, 15,'查看中期',   'project:midterm:view', 4, NULL, NULL, NULL, 3),
+(145, 12,'选题列表',   'project:selection:list', 4, NULL, NULL, NULL, 3),
+(146, 21,'删除模板',   'doc:template:del',    4, NULL, NULL, NULL, 4),
+(147, 21,'下载模板',   'doc:template:download',4, NULL, NULL, NULL, 5),
+(148, 23,'提交论文',   'doc:thesis:submit',    4, NULL, NULL, NULL, 2),
+(149, 23,'审核论文',   'doc:thesis:review',   4, NULL, NULL, NULL, 3),
+(150, 24,'上传版本',  'doc:version:submit',  4, NULL, NULL, NULL, 1),
+(151, 24,'审核版本',  'doc:version:review',  4, NULL, NULL, NULL, 2),
+(152, 24,'归档列表',   'doc:archive:list',  4, NULL, NULL, NULL, 1),
+(153, 24,'上传归档',   'doc:archive:submit', 4, NULL, NULL, NULL, 2),
+(154, 24,'撤回归档',   'doc:archive:recall', 4, NULL, NULL, NULL, 3),
+(155, 24,'审核归档',   'doc:archive:review', 4, NULL, NULL, NULL, 4),
+(156, 24,'下载归档',   'doc:archive:download',4, NULL, NULL, NULL, 5),
+(157, 31,'我的成果列表','achievement:submit:list',4, NULL, NULL, NULL, 1),
+(158, 31,'成果上传',   'achievement:submit:upload', 4, NULL, NULL, NULL, 2),
+(159, 31,'成果删除',   'achievement:submit:del', 4, NULL, NULL, NULL, 3),
+(160, 31,'成果下载',   'achievement:submit:download',4, NULL, NULL, NULL, 4),
+(161, 32,'答辩列表',  'achievement:defense:list',  4, NULL, NULL, NULL, 1),
+(162, 32,'查看明细',  'achievement:defense:detail', 4, NULL, NULL, NULL, 2),
+(163, 33,'查看意见',  'achievement:approval:view', 4, NULL, NULL, NULL, 1),
+(164, 33,'添加意见',  'achievement:approval:add',  4, NULL, NULL, NULL, 2),
+(165, 33,'编辑意见',  'achievement:approval:edit', 4, NULL, NULL, NULL, 3),
+(166, 33,'删除意见',  'achievement:approval:del',  4, NULL, NULL, NULL, 4),
+(167, 33,'更新状态',  'achievement:approval:status',4, NULL, NULL, NULL, 5),
+(168, 33,'审批管理',  'achievement:approval:manage',4, NULL, NULL, NULL, 0),
+(169, 34,'成绩查看',  'achievement:grade:view',   4, NULL, NULL, NULL, 1),
+(170, 34,'录入成绩',  'achievement:grade:input',  4, NULL, NULL, NULL, 2),
+(171, 34,'调整成绩',  'achievement:grade:adjust',4, NULL, NULL, NULL, 3),
+(172, 34,'锁定成绩',  'achievement:grade:lock',  4, NULL, NULL, NULL, 4),
+(173, 34,'成绩管理',  'achievement:grade:manage',4, NULL, NULL, NULL, 0),
+(174, 43,'发起预警',  'guidance:warning:add',  4, NULL, NULL, NULL, 1)
+ON DUPLICATE KEY UPDATE parent_id = VALUES(parent_id), perm_name = VALUES(perm_name), perm_code = VALUES(perm_code), perm_type = VALUES(perm_type), path = VALUES(path), component = VALUES(component), icon = VALUES(icon), sort_order = VALUES(sort_order);
 
 -- ============================================================
 -- 角色权限分配
 -- ============================================================
 
 -- 管理员：拥有全部菜单和接口权限
-INSERT INTO sys_role_permission (role_id, perm_id)
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id)
 SELECT 1, perm_id FROM sys_permission;
 
 -- 教师：用户与权限管理（只读目录），毕业设计项目管理（全部），文档材料（全部），成果审批（全部），指导监控（全部），运维（只读日志），首页
-INSERT INTO sys_role_permission (role_id, perm_id)
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id)
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173);
+(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173);
 
 -- 学生：只能访问与自己相关的模块（选题浏览、选题申请、项目进度、中期检查、文档、成果、指导）
-INSERT INTO sys_role_permission (role_id, perm_id)
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id)
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 33, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156, 157, 158, 159, 160, 161, 163, 169);
+(113, 114, 117, 120, 122, 127, 129, 130, 131, 132, 133, 134, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156, 157, 158, 159, 160, 161, 163, 169);
 
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- 菜单及权限配置：优秀成果管理
 -- ============================================================
--- 删除旧条目（perm_id=35，component 为空），避免路由冲突
-DELETE FROM sys_permission WHERE perm_id = 35;
-
 -- 优秀成果管理（整合到成果与审批管理下，父级 perm_id=30）
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order)
 VALUES (202, 30, '优秀成果管理', 'achievement:excellent:list', 2, '/achievement/excellent', 'achievement/excellent/index', 'Medal', 5)
 ON DUPLICATE KEY UPDATE parent_id = 30, perm_name = '优秀成果管理', perm_code = 'achievement:excellent:list', path = '/achievement/excellent', component = 'achievement/excellent/index', icon = 'Medal', sort_order = 5;
 
 -- 管理员拥有优秀成果管理权限
-INSERT INTO sys_role_permission (role_id, perm_id) VALUES (1, 202);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (1, 202);
 
 -- 教师拥有优秀成果管理权限（查看、认定、导出）
-INSERT INTO sys_role_permission (role_id, perm_id) VALUES (2, 202);
+INSERT IGNORE INTO sys_role_permission (role_id, perm_id) VALUES (2, 202);
 
 SET FOREIGN_KEY_CHECKS = 1;

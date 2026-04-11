@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.GuidanceRecordMapper">
+
+    <select id="selectPageForAdmin" resultType="com.gdplatform.dto.GuidanceRecordResp">
+        SELECT
+            gr.guide_id,
+            gr.selection_id,
+            gr.teacher_id,
+            u_t.real_name AS teacherName,
+            gr.student_id,
+            u_s.real_name AS studentName,
+            u_s.student_no AS studentNo,
+            CASE
+                WHEN ps.is_custom_topic = 1 THEN ps.custom_topic_name
+                ELSE pt.topic_name
+            END AS topicName,
+            ps.campus_name AS campusName,
+            ps.academic_year AS academicYear,
+            gr.guide_time,
+            gr.place,
+            gr.duration_minutes,
+            gr.guidance_type,
+            gr.content,
+            gr.attachment_id,
+            gr.student_feedback AS studentFeedback,
+            gr.feedback_time AS feedbackTime,
+            gr.status,
+            gr.create_time,
+            IFNULL(cnt.cnt, 0) AS totalGuidesForStudent
+        FROM guidance_record gr
+        LEFT JOIN sys_user u_t ON gr.teacher_id = u_t.user_id
+        LEFT JOIN sys_user u_s ON gr.student_id = u_s.user_id
+        LEFT JOIN project_selection ps ON gr.selection_id = ps.selection_id
+        LEFT JOIN project_topic pt ON ps.topic_id = pt.topic_id
+        LEFT JOIN (
+            SELECT student_id, COUNT(*) AS cnt
+            FROM guidance_record
+            WHERE is_deleted = 0
+            GROUP BY student_id
+        ) cnt ON gr.student_id = cnt.student_id
+        <where>
+            gr.is_deleted = 0
+            <if test="campusName != null and campusName != ''">
+                AND ps.campus_name LIKE CONCAT('%', #{campusName}, '%')
+            </if>
+            <if test="academicYear != null and academicYear != ''">
+                AND ps.academic_year = #{academicYear}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (u_s.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.student_no LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_t.real_name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="teacherId != null">
+                AND gr.teacher_id = #{teacherId}
+            </if>
+        </where>
+        ORDER BY gr.guide_time DESC
+    </select>
+
+    <select id="selectPageForTeacher" resultType="com.gdplatform.dto.GuidanceRecordResp">
+        SELECT
+            gr.guide_id,
+            gr.selection_id,
+            gr.teacher_id,
+            u_t.real_name AS teacherName,
+            gr.student_id,
+            u_s.real_name AS studentName,
+            u_s.student_no AS studentNo,
+            CASE
+                WHEN ps.is_custom_topic = 1 THEN ps.custom_topic_name
+                ELSE pt.topic_name
+            END AS topicName,
+            ps.campus_name AS campusName,
+            ps.academic_year AS academicYear,
+            gr.guide_time,
+            gr.place,
+            gr.duration_minutes,
+            gr.guidance_type,
+            gr.content,
+            gr.attachment_id,
+            gr.student_feedback AS studentFeedback,
+            gr.feedback_time AS feedbackTime,
+            gr.status,
+            gr.create_time,
+            IFNULL(cnt.cnt, 0) AS totalGuidesForStudent
+        FROM guidance_record gr
+        LEFT JOIN sys_user u_t ON gr.teacher_id = u_t.user_id
+        LEFT JOIN sys_user u_s ON gr.student_id = u_s.user_id
+        LEFT JOIN project_selection ps ON gr.selection_id = ps.selection_id
+        LEFT JOIN project_topic pt ON ps.topic_id = pt.topic_id
+        LEFT JOIN (
+            SELECT student_id, COUNT(*) AS cnt
+            FROM guidance_record
+            WHERE is_deleted = 0
+            GROUP BY student_id
+        ) cnt ON gr.student_id = cnt.student_id
+        <where>
+            gr.is_deleted = 0
+            AND ps.campus_name = #{campusName}
+            <if test="academicYear != null and academicYear != ''">
+                AND ps.academic_year = #{academicYear}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (u_s.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.student_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY gr.guide_time DESC
+    </select>
+
+    <select id="selectPageForStudent" resultType="com.gdplatform.dto.GuidanceRecordResp">
+        SELECT
+            gr.guide_id,
+            gr.selection_id,
+            gr.teacher_id,
+            u_t.real_name AS teacherName,
+            gr.student_id,
+            u_s.real_name AS studentName,
+            u_s.student_no AS studentNo,
+            CASE
+                WHEN ps.is_custom_topic = 1 THEN ps.custom_topic_name
+                ELSE pt.topic_name
+            END AS topicName,
+            ps.campus_name AS campusName,
+            ps.academic_year AS academicYear,
+            gr.guide_time,
+            gr.place,
+            gr.duration_minutes,
+            gr.guidance_type,
+            gr.content,
+            gr.attachment_id,
+            gr.student_feedback AS studentFeedback,
+            gr.feedback_time AS feedbackTime,
+            gr.status,
+            gr.create_time,
+            IFNULL(cnt.cnt, 0) AS totalGuidesForStudent
+        FROM guidance_record gr
+        LEFT JOIN sys_user u_t ON gr.teacher_id = u_t.user_id
+        LEFT JOIN sys_user u_s ON gr.student_id = u_s.user_id
+        LEFT JOIN project_selection ps ON gr.selection_id = ps.selection_id
+        LEFT JOIN project_topic pt ON ps.topic_id = pt.topic_id
+        LEFT JOIN (
+            SELECT student_id, COUNT(*) AS cnt
+            FROM guidance_record
+            WHERE is_deleted = 0
+            GROUP BY student_id
+        ) cnt ON gr.student_id = cnt.student_id
+        <where>
+            gr.is_deleted = 0
+            AND gr.student_id = #{studentId}
+            <if test="academicYear != null and academicYear != ''">
+                AND ps.academic_year = #{academicYear}
+            </if>
+        </where>
+        ORDER BY gr.guide_time DESC
+    </select>
+
+    <select id="countPageForAdmin" resultType="long">
+        SELECT COUNT(*)
+        FROM guidance_record gr
+        LEFT JOIN project_selection ps ON gr.selection_id = ps.selection_id
+        LEFT JOIN sys_user u_s ON gr.student_id = u_s.user_id
+        LEFT JOIN sys_user u_t ON gr.teacher_id = u_t.user_id
+        <where>
+            gr.is_deleted = 0
+            <if test="campusName != null and campusName != ''">
+                AND ps.campus_name LIKE CONCAT('%', #{campusName}, '%')
+            </if>
+            <if test="academicYear != null and academicYear != ''">
+                AND ps.academic_year = #{academicYear}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (u_s.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.student_no LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_t.real_name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="teacherId != null">
+                AND gr.teacher_id = #{teacherId}
+            </if>
+        </where>
+    </select>
+
+    <select id="countPageForTeacher" resultType="long">
+        SELECT COUNT(*)
+        FROM guidance_record gr
+        LEFT JOIN project_selection ps ON gr.selection_id = ps.selection_id
+        LEFT JOIN sys_user u_s ON gr.student_id = u_s.user_id
+        <where>
+            gr.is_deleted = 0
+            AND ps.campus_name = #{campusName}
+            <if test="academicYear != null and academicYear != ''">
+                AND ps.academic_year = #{academicYear}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (u_s.real_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR u_s.student_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <select id="countPageForStudent" resultType="long">
+        SELECT COUNT(*)
+        FROM guidance_record gr
+        LEFT JOIN project_selection ps ON gr.selection_id = ps.selection_id
+        <where>
+            gr.is_deleted = 0
+            AND gr.student_id = #{studentId}
+            <if test="academicYear != null and academicYear != ''">
+                AND ps.academic_year = #{academicYear}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertWithAcademicYear" useGeneratedKeys="true" keyProperty="guideId">
+        INSERT INTO guidance_record (
+            selection_id, teacher_id, student_id, guide_time, place,
+            duration_minutes, guidance_type, content, attachment_id,
+            status, academic_year, create_time, update_time, is_deleted
+        ) VALUES (
+            #{selectionId}, #{teacherId}, #{studentId}, #{guideTime}, #{place},
+            #{durationMinutes}, #{guidanceType}, #{content}, #{attachmentId},
+            #{status}, #{academicYear}, NOW(), NOW(), 0
+        )
+    </insert>
+
+    <select id="selectSelectionsForTeacher" resultType="com.gdplatform.dto.SelectionForGuidanceResp">
+        SELECT DISTINCT
+            ps.selection_id AS selectionId,
+            u.real_name AS studentName,
+            u.student_no AS studentNo,
+            CASE
+                WHEN ps.is_custom_topic = 1 THEN ps.custom_topic_name
+                ELSE pt.topic_name
+            END AS topicName,
+            ps.custom_topic_name AS customTopicName,
+            ps.is_custom_topic AS isCustomTopic,
+            ps.academic_year AS academicYear,
+            ps.status,
+            ps.create_time AS createTime
+        FROM project_selection ps
+        INNER JOIN sys_user u ON ps.student_id = u.user_id
+        LEFT JOIN project_topic pt ON ps.topic_id = pt.topic_id
+        INNER JOIN guidance_relation gr ON ps.selection_id = gr.selection_id AND gr.teacher_id = #{teacherId}
+        WHERE ps.is_deleted = 0
+          AND ps.status = 'APPROVED'
+        ORDER BY ps.create_time DESC
+    </select>
+
+</mapper>
