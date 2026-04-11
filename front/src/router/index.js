@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
 const modules = import.meta.glob('../views/**/*.vue')
@@ -40,7 +40,7 @@ export function registerDynamicRoutes(menuNodes) {
 }
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/login',
@@ -107,6 +107,8 @@ router.beforeEach(async (to, from, next) => {
       }
       registerDynamicRoutes(store.menus)
       store.dynamicRoutesAdded = true
+      next(to)
+      return
     } catch {
       store.clear()
       next({ name: 'Login' })
