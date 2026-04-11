@@ -73,7 +73,9 @@
       @selection-change="onSelectionChange"
     >
       <el-table-column type="selection" width="40" />
-      <el-table-column prop="operateTime" label="操作时间" width="170" />
+      <el-table-column prop="operateTime" label="操作时间" width="170">
+        <template #default="{ row }">{{ formatTime(row.operateTime) }}</template>
+      </el-table-column>
       <el-table-column prop="userName" label="操作人" width="110" />
       <el-table-column prop="userType" label="身份" width="80" align="center">
         <template #default="{ row }">{{ userTypeLabel(row.userType) }}</template>
@@ -175,6 +177,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, Delete } from '@element-plus/icons-vue'

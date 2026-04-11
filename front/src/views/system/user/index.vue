@@ -179,6 +179,7 @@
 </template>
 
 <script setup>
+import { formatFullTime as formatDate } from '@/utils/timeFormat'
 import { reactive, ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -278,18 +279,6 @@ function typeLabel(t) {
   if (t === 2) return '教师'
   if (t === 3) return '管理员'
   return '—'
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—'
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
 // ---------- 数据加载 ----------

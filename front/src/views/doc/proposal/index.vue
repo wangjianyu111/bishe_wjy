@@ -315,6 +315,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatDate } from '@/utils/timeFormat'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Upload, UploadFilled, Finished, Document, RefreshLeft } from '@element-plus/icons-vue'
@@ -645,13 +646,6 @@ async function handleReview(proposalId, status) {
 }
 
 // ======== 公共函数 ========
-function formatDate(value) {
-  if (!value) return '—'
-  const d = new Date(value)
-  const pad = n => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
 // ======== 初始化 ========
 onMounted(async () => {
   if (isStudent.value) {

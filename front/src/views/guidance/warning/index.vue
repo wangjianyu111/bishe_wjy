@@ -148,7 +148,9 @@
           <el-table-column prop="handleComment" label="处理意见" min-width="150" show-overflow-tooltip>
             <template #default="{ row }">{{ row.handleComment || '—' }}</template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="170" />
+          <el-table-column prop="createTime" label="创建时间" width="170">
+            <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+          </el-table-column>
           <el-table-column label="操作" width="140" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" @click="openHandleDialog(row)">处理</el-button>
@@ -363,6 +365,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'

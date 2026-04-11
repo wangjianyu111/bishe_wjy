@@ -141,7 +141,9 @@
             </template>
           </el-table-column>
           <el-table-column prop="academicYear" label="学年" width="110" />
-          <el-table-column prop="createTime" label="上传时间" width="170" />
+          <el-table-column prop="createTime" label="上传时间" width="170">
+            <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+          </el-table-column>
           <el-table-column label="操作" width="100" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" @click="openDetail(row)">详情</el-button>
@@ -249,6 +251,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Upload, UploadFilled, Trophy, Document, Delete, Download } from '@element-plus/icons-vue'

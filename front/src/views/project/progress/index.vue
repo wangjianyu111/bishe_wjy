@@ -249,6 +249,7 @@
 </template>
 
 <script setup>
+import { formatDate } from '@/utils/timeFormat'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
@@ -461,13 +462,6 @@ function progressColor(val) {
   if (val < 60) return '#409eff'
   if (val < 90) return '#e6a23c'
   return '#67c23a'
-}
-
-function formatDate(value) {
-  if (!value) return '—'
-  const d = new Date(value)
-  const pad = n => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 // ======== 初始化 ========

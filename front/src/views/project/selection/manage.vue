@@ -158,6 +158,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { fetchSelectionPage, approveSelection, rejectSelection, fetchTeachers } from '@/api/project'
@@ -204,13 +205,6 @@ function tagType(status) {
   if (status === 'REJECTED') return 'danger'
   if (status === 'WITHDRAWN') return 'warning'
   return 'info'
-}
-
-function formatTime(value) {
-  if (!value) return '—'
-  const d = new Date(value)
-  const pad = n => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 async function loadTeachers() {

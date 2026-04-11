@@ -60,7 +60,9 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="上传时间" width="170" />
+          <el-table-column prop="createTime" label="上传时间" width="170">
+            <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+          </el-table-column>
           <el-table-column label="操作" width="160" fixed="right">
             <template #default="{ row }">
               <template v-if="row.status === 'SUBMITTED'">
@@ -138,7 +140,9 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="上传时间" width="170" />
+          <el-table-column prop="createTime" label="上传时间" width="170">
+            <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+          </el-table-column>
           <el-table-column label="操作" width="200" fixed="right">
             <template #default="{ row }">
               <div class="action-btns">
@@ -299,6 +303,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Upload, UploadFilled, FolderOpened, Document } from '@element-plus/icons-vue'

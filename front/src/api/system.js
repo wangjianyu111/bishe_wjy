@@ -136,3 +136,85 @@ export function performVersionRollout(data) {
 export function deleteVersion(versionId) {
   return http.delete(`/system/version/${versionId}`)
 }
+
+// ---------- 系统监控 ----------
+export function fetchMonitorDashboard() {
+  return http.get('/system/monitor/dashboard')
+}
+
+export function fetchMonitorMetricsPage(params) {
+  return http.get('/system/monitor/metrics/page', { params })
+}
+
+export function fetchMonitorAlertsPage(params) {
+  return http.get('/system/monitor/alerts/page', { params })
+}
+
+export function fetchMonitorApiStatsPage(params) {
+  return http.get('/system/monitor/api-stats/page', { params })
+}
+
+export function resolveMonitorAlert(data) {
+  return http.post('/system/monitor/alerts/resolve', data)
+}
+
+export function clearMonitorHistory(days) {
+  return http.delete('/system/monitor/history', { params: { days } })
+}
+
+// ---------- 系统参数 ----------
+export function fetchSchoolPage(params) {
+  return http.get('/system/param/school/page', { params })
+}
+export function addSchool(data) {
+  return http.post('/system/param/school', data)
+}
+export function updateSchool(data) {
+  return http.put('/system/param/school', data)
+}
+export function deleteSchool(id) {
+  return http.delete(`/system/param/school/${id}`)
+}
+
+export function fetchDesignStagePage(params) {
+  return http.get('/system/param/design-stage/page', { params })
+}
+export function addDesignStage(data) {
+  return http.post('/system/param/design-stage', data)
+}
+export function updateDesignStage(data) {
+  return http.put('/system/param/design-stage', data)
+}
+export function deleteDesignStage(id) {
+  return http.delete(`/system/param/design-stage/${id}`)
+}
+
+export function fetchGradePage(params) {
+  return http.get('/system/param/grade/page', { params })
+}
+export function addGrade(data) {
+  return http.post('/system/param/grade', data)
+}
+export function updateGrade(data) {
+  return http.put('/system/param/grade', data)
+}
+export function deleteGrade(id) {
+  return http.delete(`/system/param/grade/${id}`)
+}
+
+export function fetchTimeSlotPage(params) {
+  return http.get('/system/param/time-slot/page', { params })
+}
+export function addTimeSlot(data) {
+  return http.post('/system/param/time-slot', data)
+}
+export function updateTimeSlot(data) {
+  return http.put('/system/param/time-slot', data)
+}
+export function deleteTimeSlot(id) {
+  return http.delete(`/system/param/time-slot/${id}`)
+}
+
+export function batchUpdateParams(data) {
+  return http.post('/system/param/batch-update', data)
+}

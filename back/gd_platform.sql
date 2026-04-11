@@ -968,6 +968,179 @@ INSERT INTO `sys_version_rollout` VALUES (1, 1, 'FULL', 100, 'COMPLETED', '2026-
 INSERT INTO `sys_version_rollout` VALUES (2, 2, 'FULL', 100, 'COMPLETED', '2026-04-12 01:00:00', 1, '管理员', '初始版本全量发布', '2026-04-12 01:00:00');
 
 -- ----------------------------
+-- Table structure for sys_school
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_school`;
+CREATE TABLE `sys_school` (
+  `school_id` bigint NOT NULL AUTO_INCREMENT COMMENT '学校ID',
+  `school_name` varchar(100) NOT NULL COMMENT '学校名称',
+  `school_code` varchar(50) NULL COMMENT '学校代码',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态：1启用 0禁用',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`school_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '学校信息' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_school
+-- ----------------------------
+INSERT INTO `sys_school` VALUES (1, '示例大学', 'GDU-001', 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+
+-- ----------------------------
+-- Table structure for sys_design_stage
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_design_stage`;
+CREATE TABLE `sys_design_stage` (
+  `stage_id` bigint NOT NULL AUTO_INCREMENT COMMENT '阶段ID',
+  `stage_name` varchar(100) NOT NULL COMMENT '阶段名称',
+  `school_id` bigint NULL COMMENT '关联学校ID',
+  `stage_order` int NOT NULL DEFAULT 0 COMMENT '排序',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态：1启用 0禁用',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`stage_id`) USING BTREE,
+  INDEX `idx_design_stage_school`(`school_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '毕业设计阶段' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_design_stage
+-- ----------------------------
+INSERT INTO `sys_design_stage` VALUES (1, '选题阶段', 1, 1, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_design_stage` VALUES (2, '开题阶段', 1, 2, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_design_stage` VALUES (3, '中期检查', 1, 3, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_design_stage` VALUES (4, '论文撰写', 1, 4, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_design_stage` VALUES (5, '答辩阶段', 1, 5, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+
+-- ----------------------------
+-- Table structure for sys_grade
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_grade`;
+CREATE TABLE `sys_grade` (
+  `grade_id` bigint NOT NULL AUTO_INCREMENT COMMENT '年级ID',
+  `grade_name` varchar(50) NOT NULL COMMENT '年级名称',
+  `school_id` bigint NULL COMMENT '关联学校ID',
+  `grade_year` int NULL COMMENT '入学年份',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态：1启用 0禁用',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`grade_id`) USING BTREE,
+  INDEX `idx_grade_year`(`grade_year` ASC) USING BTREE,
+  INDEX `idx_grade_school`(`school_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '年级信息' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_grade
+-- ----------------------------
+INSERT INTO `sys_grade` VALUES (1, '2022级', 1, 2022, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_grade` VALUES (2, '2023级', 1, 2023, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_grade` VALUES (3, '2024级', 1, 2024, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_grade` VALUES (4, '2025级', 1, 2025, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+
+-- ----------------------------
+-- Table structure for sys_time_slot
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_time_slot`;
+CREATE TABLE `sys_time_slot` (
+  `slot_id` bigint NOT NULL AUTO_INCREMENT COMMENT '时间段ID',
+  `slot_name` varchar(100) NOT NULL COMMENT '时间段名称',
+  `school_id` bigint NULL COMMENT '关联学校ID',
+  `slot_type` varchar(50) NOT NULL COMMENT '类型：THESIS_SUBMISSION/DEFENSE/SCORE/ARCHIVE',
+  `start_date` varchar(20) NULL COMMENT '开始日期',
+  `end_date` varchar(20) NULL COMMENT '结束日期',
+  `slot_order` int NOT NULL DEFAULT 0 COMMENT '排序',
+  `status` int NOT NULL DEFAULT 1 COMMENT '状态：1启用 0禁用',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`slot_id`) USING BTREE,
+  INDEX `idx_slot_type`(`slot_type` ASC) USING BTREE,
+  INDEX `idx_slot_school`(`school_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统时间段' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_time_slot
+-- ----------------------------
+INSERT INTO `sys_time_slot` VALUES (1, '2025春季论文提交期', 1, 'THESIS_SUBMISSION', '2025-03-01', '2025-04-30', 1, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_time_slot` VALUES (2, '2025春季答辩期', 1, 'DEFENSE', '2025-05-15', '2025-06-10', 2, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_time_slot` VALUES (3, '2025春季成绩评定', 1, 'SCORE', '2025-06-11', '2025-06-20', 3, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+INSERT INTO `sys_time_slot` VALUES (4, '2025春季归档', 1, 'ARCHIVE', '2025-06-21', '2025-07-10', 4, 1, '2026-04-12 01:00:00', '2026-04-12 01:00:00');
+
+-- ----------------------------
+-- Table structure for sys_monitor_metrics
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_monitor_metrics`;
+CREATE TABLE `sys_monitor_metrics`  (
+  `metric_id` bigint NOT NULL AUTO_INCREMENT COMMENT '指标ID',
+  `metric_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '指标类型：CPU/MEMORY/DISK/NETWORK/DB_CONNECTION/API_RESPONSE',
+  `metric_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '指标名称',
+  `metric_value` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT '指标值',
+  `metric_unit` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '单位',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'NORMAL' COMMENT '状态：NORMAL/WARNING/CRITICAL',
+  `threshold` decimal(10,2) NULL COMMENT '阈值',
+  `record_time` datetime NULL COMMENT '记录时间',
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '备注',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`metric_id`) USING BTREE,
+  INDEX `idx_metric_type`(`metric_type` ASC) USING BTREE,
+  INDEX `idx_metric_time`(`record_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统监控指标' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_monitor_metrics
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for sys_monitor_alert
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_monitor_alert`;
+CREATE TABLE `sys_monitor_alert`  (
+  `alert_id` bigint NOT NULL AUTO_INCREMENT COMMENT '告警ID',
+  `alert_level` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '告警级别：INFO/WARNING/ERROR/CRITICAL',
+  `alert_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '告警类型',
+  `alert_title` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '告警标题',
+  `alert_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '告警内容',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'ACTIVE' COMMENT '状态：ACTIVE/RESOLVED/IGNORED',
+  `trigger_time` datetime NULL COMMENT '触发时间',
+  `resolve_time` datetime NULL COMMENT '解决时间',
+  `resolved_by` bigint NULL COMMENT '解决人ID',
+  `resolved_by_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '解决人姓名',
+  `resolve_remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '解决备注',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`alert_id`) USING BTREE,
+  INDEX `idx_alert_status`(`status` ASC) USING BTREE,
+  INDEX `idx_alert_time`(`trigger_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统监控告警' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_monitor_alert
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for sys_monitor_api_stats
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_monitor_api_stats`;
+CREATE TABLE `sys_monitor_api_stats`  (
+  `stat_id` bigint NOT NULL AUTO_INCREMENT COMMENT '统计ID',
+  `api_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '接口路径',
+  `api_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '接口名称',
+  `request_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '请求方法',
+  `avg_response_time` decimal(10,2) NULL DEFAULT 0.00 COMMENT '平均响应时间(ms)',
+  `max_response_time` bigint NULL DEFAULT 0 COMMENT '最大响应时间(ms)',
+  `min_response_time` bigint NULL DEFAULT 0 COMMENT '最小响应时间(ms)',
+  `total_requests` bigint NULL DEFAULT 0 COMMENT '请求总数',
+  `success_count` bigint NULL DEFAULT 0 COMMENT '成功次数',
+  `fail_count` bigint NULL DEFAULT 0 COMMENT '失败次数',
+  `tps` decimal(10,2) NULL DEFAULT 0.00 COMMENT 'TPS',
+  `stat_time` datetime NULL COMMENT '统计时间',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`stat_id`) USING BTREE,
+  INDEX `idx_api_stats_time`(`stat_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '接口统计' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_monitor_api_stats
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for sys_permission
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_permission`;
@@ -1021,8 +1194,8 @@ INSERT INTO `sys_permission` VALUES (42, 40, '教师反馈管理', 'guidance:fee
 INSERT INTO `sys_permission` VALUES (43, 40, '质量预警管理', 'guidance:warning', 2, '/guidance/warning', 'guidance/warning/index', 'Warning', 3, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (44, 40, '指导关系管理', 'guidance:relation', 2, '/guidance/relation', 'guidance/relation/index', 'Connection', 4, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (50, 0, '系统运维管理', 'sysops', 1, '/sysops', NULL, 'Tools', 6, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
-INSERT INTO `sys_permission` VALUES (51, 50, '系统参数管理', 'sysops:param', 2, '/sysops/param', NULL, 'Setting', 1, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
-INSERT INTO `sys_permission` VALUES (52, 50, '系统监控管理', 'sysops:monitor', 2, '/sysops/monitor', NULL, 'Monitor', 2, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
+INSERT INTO `sys_permission` VALUES (51, 50, '系统参数管理', 'sysops:param', 2, '/sysops/param', 'sysops/param/index', 'Setting', 1, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
+INSERT INTO `sys_permission` VALUES (52, 50, '系统监控管理', 'sysops:monitor', 2, '/sysops/monitor', 'sysops/monitor/index', 'Monitor', 2, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (53, 50, '版本更新管理', 'sysops:version', 2, '/sysops/version', 'sysops/version/index', 'Refresh', 3, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (54, 50, '操作日志管理', 'sysops:log', 2, '/sysops/log', 'system/operation-log/index', 'List', 4, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);
 INSERT INTO `sys_permission` VALUES (55, 0, '首页', 'dashboard', 2, '/dashboard', 'Dashboard', 'HomeFilled', 0, 1, '2026-04-12 01:04:51', '2026-04-12 01:04:51', 0);

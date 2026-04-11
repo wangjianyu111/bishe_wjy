@@ -388,6 +388,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime, formatDate } from '@/utils/timeFormat'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
@@ -634,13 +635,6 @@ function scoreClass(score) {
   if (s >= 90) return 'score-high'
   if (s >= 70) return 'score-mid'
   return 'score-low'
-}
-
-function formatTime(value) {
-  if (!value) return '—'
-  const d = new Date(value)
-  const pad = n => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 // ==================== 初始化 ====================

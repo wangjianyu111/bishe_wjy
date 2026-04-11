@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.SysMonitorApiStatsMapper">
+
+    <select id="selectApiStatsPage" resultType="com.gdplatform.dto.MonitorApiStatsResp">
+        SELECT
+            stat_id AS statId,
+            api_path AS apiPath,
+            api_name AS apiName,
+            request_method AS requestMethod,
+            avg_response_time AS avgResponseTime,
+            max_response_time AS maxResponseTime,
+            min_response_time AS minResponseTime,
+            total_requests AS totalRequests,
+            success_count AS successCount,
+            fail_count AS failCount,
+            tps,
+            stat_time AS statTime
+        FROM sys_monitor_api_stats
+        ORDER BY stat_time DESC
+    </select>
+
+</mapper>

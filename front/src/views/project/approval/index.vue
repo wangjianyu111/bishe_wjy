@@ -112,6 +112,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { fetchTeacherApprovals, approveSelection, rejectSelection } from '@/api/project'
@@ -145,13 +146,6 @@ function statusTagType(status) {
   if (status === 'APPROVED') return 'success'
   if (status === 'REJECTED') return 'danger'
   return 'info'
-}
-
-function formatTime(value) {
-  if (!value) return '—'
-  const d = new Date(value)
-  const pad = n => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 async function loadData(page = 1) {

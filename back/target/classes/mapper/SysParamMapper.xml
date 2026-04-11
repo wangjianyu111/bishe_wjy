@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.SysParamMapper">
+
+    <select id="selectSchoolPage" resultType="com.gdplatform.dto.SchoolResp">
+        SELECT school_id AS schoolId, school_name AS campusName, school_code AS campusCode,
+               status, create_time AS createTime
+        FROM sys_school
+        <where>
+            <if test="req.status != null and req.status != ''">
+                AND status = #{req.status}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectDesignStagePage" resultType="com.gdplatform.dto.DesignStageResp">
+        SELECT d.stage_id AS stageId, d.stage_name AS stageName, d.school_id AS schoolId,
+               s.school_name AS campusName, d.stage_order AS stageOrder,
+               d.status, d.create_time AS createTime
+        FROM sys_design_stage d
+        LEFT JOIN sys_school s ON s.school_id = d.school_id
+        <where>
+            <if test="req.schoolId != null">
+                AND d.school_id = #{req.schoolId}
+            </if>
+            <if test="req.status != null and req.status != ''">
+                AND d.status = #{req.status}
+            </if>
+        </where>
+        ORDER BY d.stage_order ASC, d.create_time ASC
+    </select>
+
+    <select id="selectGradePage" resultType="com.gdplatform.dto.SysGradeResp">
+        SELECT g.grade_id AS gradeId, g.grade_name AS gradeName, g.school_id AS schoolId,
+               s.school_name AS campusName, g.grade_year AS gradeYear,
+               g.status, g.create_time AS createTime
+        FROM sys_grade g
+        LEFT JOIN sys_school s ON s.school_id = g.school_id
+        <where>
+            <if test="req.schoolId != null">
+                AND g.school_id = #{req.schoolId}
+            </if>
+            <if test="req.status != null and req.status != ''">
+                AND g.status = #{req.status}
+            </if>
+        </where>
+        ORDER BY g.grade_year DESC, g.create_time DESC
+    </select>
+
+    <select id="selectTimeSlotPage" resultType="com.gdplatform.dto.TimeSlotResp">
+        SELECT t.slot_id AS slotId, t.slot_name AS slotName, t.school_id AS schoolId,
+               s.school_name AS campusName, t.slot_type AS slotType,
+               t.start_date AS startDate, t.end_date AS endDate, t.slot_order AS slotOrder,
+               t.status, t.create_time AS createTime
+        FROM sys_time_slot t
+        LEFT JOIN sys_school s ON s.school_id = t.school_id
+        <where>
+            <if test="req.schoolId != null">
+                AND t.school_id = #{req.schoolId}
+            </if>
+            <if test="req.type != null and req.type != ''">
+                AND t.slot_type = #{req.type}
+            </if>
+            <if test="req.status != null and req.status != ''">
+                AND t.status = #{req.status}
+            </if>
+        </where>
+        ORDER BY t.slot_order ASC, t.create_time ASC
+    </select>
+
+</mapper>

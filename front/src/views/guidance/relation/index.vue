@@ -241,7 +241,9 @@
                         <el-tag v-else size="small">已解散</el-tag>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="createTime" label="创建时间" width="170" />
+                    <el-table-column prop="createTime" label="创建时间" width="170">
+                      <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+                    </el-table-column>
                     <el-table-column label="操作" width="200" fixed="right">
                       <template #default="{ row }">
                         <el-button type="primary" link size="small" @click="openGroupDetail(row)">详情</el-button>
@@ -305,7 +307,9 @@
                     <el-tag v-else size="small">{{ row.status }}</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="createTime" label="申请时间" width="170" />
+                <el-table-column prop="createTime" label="申请时间" width="170">
+                  <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+                </el-table-column>
                 <el-table-column label="操作" width="160" fixed="right">
                   <template #default="{ row }">
                     <template v-if="row.status === 'PENDING'">
@@ -350,7 +354,9 @@
                     <el-tag v-else size="small">{{ row.status }}</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="createTime" label="申请时间" width="170" />
+                <el-table-column prop="createTime" label="申请时间" width="170">
+                  <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+                </el-table-column>
                 <el-table-column label="操作" width="120" fixed="right">
                   <template #default="{ row }">
                     <el-button
@@ -512,7 +518,9 @@
                     <el-tag v-else type="danger" size="small">已拒绝</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="createTime" label="申请时间" width="170" />
+                <el-table-column prop="createTime" label="申请时间" width="170">
+                  <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+                </el-table-column>
                 <el-table-column label="操作" width="160" fixed="right">
                   <template #default="{ row }">
                     <template v-if="row.status === 'PENDING'">
@@ -554,7 +562,9 @@
                     <el-tag v-else type="danger" size="small">已拒绝</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="createTime" label="申请时间" width="170" />
+                <el-table-column prop="createTime" label="申请时间" width="170">
+                  <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
+                </el-table-column>
                 <el-table-column label="操作" width="120" fixed="right">
                   <template #default="{ row }">
                     <el-button v-if="row.status === 'PENDING'" type="danger" link size="small" @click="handleCancelApply(row)">撤回</el-button>
@@ -776,6 +786,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Bell, Close, Search } from '@element-plus/icons-vue'

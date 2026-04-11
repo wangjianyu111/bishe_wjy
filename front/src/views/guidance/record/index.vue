@@ -58,7 +58,9 @@
               <el-tag size="small" type="info">{{ row.guidanceTypeLabel || row.guidanceType }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="guideTime" label="指导时间" width="170" />
+          <el-table-column prop="guideTime" label="指导时间" width="170">
+            <template #default="{ row }">{{ formatTime(row.guideTime) }}</template>
+          </el-table-column>
           <el-table-column prop="place" label="地点" width="120" show-overflow-tooltip />
           <el-table-column prop="durationMinutes" label="时长(分)" width="80" align="center">
             <template #default="{ row }">{{ row.durationMinutes ? row.durationMinutes + '分钟' : '—' }}</template>
@@ -161,7 +163,9 @@
               <el-tag size="small" type="info">{{ row.guidanceTypeLabel || row.guidanceType }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="guideTime" label="指导时间" width="170" />
+          <el-table-column prop="guideTime" label="指导时间" width="170">
+            <template #default="{ row }">{{ formatTime(row.guideTime) }}</template>
+          </el-table-column>
           <el-table-column prop="place" label="地点" width="120" show-overflow-tooltip />
           <el-table-column prop="durationMinutes" label="时长" width="80" align="center">
             <template #default="{ row }">{{ row.durationMinutes ? row.durationMinutes + '分钟' : '—' }}</template>
@@ -340,6 +344,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'

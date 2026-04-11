@@ -61,7 +61,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="deployedByName" label="部署人" width="100" />
-        <el-table-column prop="deployedTime" label="部署时间" width="170" />
+        <el-table-column prop="deployedTime" label="部署时间" width="170">
+          <template #default="{ row }">{{ formatTime(row.deployedTime) }}</template>
+        </el-table-column>
         <el-table-column label="强制更新" width="80" align="center">
           <template #default="{ row }">
             <el-tag v-if="row.forceUpdate === 1" type="danger" size="small">是</el-tag>
@@ -211,6 +213,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatTime } from '@/utils/timeFormat'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, CircleCheckFilled } from '@element-plus/icons-vue'
