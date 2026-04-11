@@ -95,3 +95,19 @@ export function updatePermission(data) {
 export function deletePermission(permId) {
   return http.delete(`/system/permissions/${permId}`)
 }
+
+// ---------- 操作日志 ----------
+export function fetchOperationLogPage(params) {
+  return http.get('/system/operation-log/page', { params })
+}
+
+export function exportOperationLog(params) {
+  return http.get('/system/operation-log/export', {
+    params,
+    responseType: 'blob',
+  })
+}
+
+export function deleteOperationLogBatch(ids) {
+  return http.delete('/system/operation-log/batch', { data: ids })
+}

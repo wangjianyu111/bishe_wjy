@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.SysOperationLogMapper">
+
+    <select id="selectPageForAdmin" resultType="com.gdplatform.dto.OperationLogResp">
+        SELECT
+            log_id AS logId,
+            operation_type AS operationType,
+            operation_name AS operationName,
+            request_method AS requestMethod,
+            request_url AS requestUrl,
+            request_params AS requestParams,
+            response_result AS responseResult,
+            user_id AS userId,
+            user_name AS userName,
+            user_type AS userType,
+            campus_name AS campusName,
+            ip_address AS ipAddress,
+            ip_location AS ipLocation,
+            os AS os,
+            browser AS browser,
+            duration AS duration,
+            module AS module,
+            status AS status,
+            error_msg AS errorMsg,
+            DATE_FORMAT(operate_time, '%Y-%m-%d %H:%i:%s') AS operateTime
+        FROM sys_operation_log
+        <where>
+            is_deleted = 0
+            <if test="req.operationType != null and req.operationType != ''">
+                AND operation_type = #{req.operationType}
+            </if>
+            <if test="req.operationName != null and req.operationName != ''">
+                AND operation_name LIKE CONCAT('%', #{req.operationName}, '%')
+            </if>
+            <if test="req.keyword != null and req.keyword != ''">
+                AND (user_name LIKE CONCAT('%', #{req.keyword}, '%')
+                    OR request_url LIKE CONCAT('%', #{req.keyword}, '%')
+                    OR ip_address LIKE CONCAT('%', #{req.keyword}, '%'))
+            </if>
+            <if test="req.startDate != null and req.startDate != ''">
+                AND DATE(operate_time) &gt;= #{req.startDate}
+            </if>
+            <if test="req.endDate != null and req.endDate != ''">
+                AND DATE(operate_time) &lt;= #{req.endDate}
+            </if>
+        </where>
+        ORDER BY operate_time DESC
+    </select>
+
+</mapper>

@@ -21,7 +21,7 @@ public class GuidanceRelationController {
     // ==================== 原有列表接口 ====================
 
     @GetMapping("/admin/page")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Page<GuidanceRelationResp>> adminPage(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -32,7 +32,7 @@ public class GuidanceRelationController {
     }
 
     @GetMapping("/teacher/page")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Page<GuidanceRelationResp>> teacherPage(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -42,7 +42,7 @@ public class GuidanceRelationController {
     }
 
     @GetMapping("/student/page")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Page<GuidanceRelationResp>> studentPage(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -51,34 +51,34 @@ public class GuidanceRelationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('guidance:relation:add')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Void> add(@Valid @RequestBody GuidanceRelationReq req) {
         relationService.add(req);
         return R.ok();
     }
 
     @PutMapping
-    @PreAuthorize("hasAuthority('guidance:relation:edit')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Void> update(@Valid @RequestBody GuidanceRelationReq req) {
         relationService.update(req);
         return R.ok();
     }
 
     @DeleteMapping("/{relationId}")
-    @PreAuthorize("hasAuthority('guidance:relation:del')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Void> delete(@PathVariable Long relationId) {
         relationService.terminateRelation(relationId);
         return R.ok();
     }
 
     @GetMapping("/{relationId}")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<GuidanceRelationResp> getDetail(@PathVariable Long relationId) {
         return R.ok(relationService.getDetail(relationId));
     }
 
     @GetMapping("/teacher/students")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<List<GuidanceRelationResp>> listByTeacher(
             @RequestParam(required = false) Long teacherId,
             @RequestParam(required = false) String academicYear) {
@@ -88,7 +88,7 @@ public class GuidanceRelationController {
     // ==================== 教师仪表盘 ====================
 
     @GetMapping("/teacher/dashboard/students")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Page<GuidanceRelationPageResp>> teacherStudentPage(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -98,14 +98,14 @@ public class GuidanceRelationController {
     }
 
     @GetMapping("/teacher/dashboard/groups/created")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<List<DefenseGroupCard>> teacherCreatedGroups(
             @RequestParam(required = false) String academicYear) {
         return R.ok(relationService.teacherCreatedGroups(academicYear));
     }
 
     @GetMapping("/teacher/dashboard/groups/joined")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<List<DefenseGroupCard>> teacherJoinedGroups(
             @RequestParam(required = false) String academicYear) {
         return R.ok(relationService.teacherJoinedGroups(academicYear));
@@ -114,14 +114,14 @@ public class GuidanceRelationController {
     // ==================== 学生仪表盘 ====================
 
     @GetMapping("/student/dashboard/relation")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<GuidanceRelationPageResp> studentRelation(
             @RequestParam(required = false) String academicYear) {
         return R.ok(relationService.studentRelation(academicYear));
     }
 
     @GetMapping("/student/dashboard/groups")
-    @PreAuthorize("hasAuthority('guidance:relation:view')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<List<DefenseGroupCard>> studentGroups(
             @RequestParam(required = false) String academicYear) {
         return R.ok(relationService.studentJoinedGroups(academicYear));
@@ -130,14 +130,14 @@ public class GuidanceRelationController {
     // ==================== 申请流程 ====================
 
     @PostMapping("/apply")
-    @PreAuthorize("hasAuthority('guidance:relation:add')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Void> sendApply(@Valid @RequestBody GuidanceRelationApplyReq req) {
         relationService.sendApply(req);
         return R.ok();
     }
 
     @GetMapping("/apply/received")
-    @PreAuthorize("hasAuthority('guidance:relation:handle')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Page<GuidanceRelationApplyResp>> myReceivedApplies(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size) {
@@ -145,7 +145,7 @@ public class GuidanceRelationController {
     }
 
     @GetMapping("/apply/sent")
-    @PreAuthorize("hasAuthority('guidance:relation:add')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Page<GuidanceRelationApplyResp>> mySentApplies(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size) {
@@ -153,14 +153,14 @@ public class GuidanceRelationController {
     }
 
     @PutMapping("/apply/handle")
-    @PreAuthorize("hasAuthority('guidance:relation:handle')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Void> handleApply(@Valid @RequestBody GuidanceRelationHandleReq req) {
         relationService.handleApply(req);
         return R.ok();
     }
 
     @DeleteMapping("/apply/{applyId}")
-    @PreAuthorize("hasAuthority('guidance:relation:add')")
+    @PreAuthorize("hasAuthority('guidance:relation')")
     public R<Void> cancelApply(@PathVariable Long applyId) {
         relationService.cancelApply(applyId);
         return R.ok();
