@@ -16,10 +16,11 @@ function collectLeafRoutes(menuNodes, out = []) {
       collectLeafRoutes(m.children, out)
     } else if (m.path && m.component) {
       let p = m.path.startsWith('/') ? m.path.slice(1) : m.path
+      let c = m.component.startsWith('/') ? m.component.slice(1) : m.component
       out.push({
         path: p,
         name: String(m.permCode || `menu-${m.permId}`),
-        component: loadComponent(m.component),
+        component: loadComponent(c),
         meta: { title: m.permName },
       })
     }

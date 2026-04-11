@@ -578,16 +578,43 @@ CREATE TABLE grade_evaluation (
   CONSTRAINT fk_grade_evaluator FOREIGN KEY (evaluator_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成绩评审（每位教师对每个学生的单次评分）';
 
+DROP TABLE IF EXISTS excellent_achievement;
 CREATE TABLE excellent_achievement (
-  ex_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  selection_id BIGINT NOT NULL,
-  academic_year VARCHAR(20) NOT NULL,
-  level_type VARCHAR(50) DEFAULT 'SCHOOL' COMMENT '校优/省优等',
-  remark VARCHAR(500) DEFAULT NULL,
-  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_ex_selection (selection_id),
-  CONSTRAINT fk_ex_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优秀成果';
+  excellent_id       BIGINT PRIMARY KEY AUTO_INCREMENT,
+  grade_summary_id  BIGINT NOT NULL COMMENT '关联的成绩汇总ID',
+  selection_id       BIGINT NOT NULL COMMENT '选题ID（冗余）',
+  student_id         BIGINT NOT NULL COMMENT '学生ID',
+  final_score        DECIMAL(5,2) DEFAULT NULL COMMENT '最终认定总分',
+  final_grade_level  VARCHAR(20) DEFAULT NULL COMMENT '最终认定等级（固定为优秀）',
+  status             VARCHAR(20) NOT NULL DEFAULT 'APPROVED' COMMENT '状态：PENDING/APPROVED/REJECTED',
+  approver_id        BIGINT DEFAULT NULL COMMENT '认定人ID',
+  approver_name      VARCHAR(50) DEFAULT NULL COMMENT '认定人姓名',
+  remark             VARCHAR(500) DEFAULT NULL COMMENT '认定备注',
+  is_exported        TINYINT DEFAULT 0 COMMENT '是否已导出：0否 1是',
+  approve_time       DATETIME DEFAULT NULL COMMENT '认定时间',
+  create_time        DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  update_time        DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  is_deleted         TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+  KEY idx_grade_summary (grade_summary_id),
+  KEY idx_student (student_id),
+  KEY idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优秀成果认定表';
+
+-- ============================================================
+-- 学校优秀分数线配置表
+-- ============================================================
+DROP TABLE IF EXISTS campus_threshold;
+CREATE TABLE campus_threshold (
+  threshold_id       BIGINT PRIMARY KEY AUTO_INCREMENT,
+  campus_name        VARCHAR(100) NOT NULL COMMENT '学校名称',
+  academic_year      VARCHAR(20) NOT NULL COMMENT '学年',
+  excellent_score    DECIMAL(5,2) NOT NULL COMMENT '优秀分数线（成绩总分必须大于此分数才算优秀）',
+  remark             VARCHAR(500) DEFAULT NULL COMMENT '备注',
+  create_time        DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  update_time        DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  is_deleted         TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+  UNIQUE KEY uk_campus_year (campus_name, academic_year)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学校优秀分数线配置表';
 
 -- ---------- 指导 / 反馈 / 预警 / 指导关系 ----------
 DROP TABLE IF EXISTS quality_warning;
@@ -757,8 +784,7 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (31, 30,'成果提交管理',    'achievement:submit',         2, '/achievement/submit',   'achievement/submit/index', 'Upload',              1),
 (32, 30,'答辩安排管理',    'achievement:defense',        2, '/achievement/defense',  'achievement/defense/index', 'Microphone',          2),
 (33, 30,'审批意见管理',    'achievement:approval', 2, '/achievement/approval', 'achievement/approval/index', 'Select',              3),
-(34, 30,'成绩评审管理',    'achievement:grade',          2, '/achievement/grade',    'achievement/grade/index',      'Star',                4),
-(35, 30,'优秀成果管理',    'achievement:excellent',      2, '/achievement/excellent',NULL,                  'Medal',               5);
+(34, 30,'成绩评审管理',    'achievement:grade',          2, '/achievement/grade',    'achievement/grade/index',      'Star',                4);
 
 -- （五）指导与质量监控管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
@@ -890,5 +916,24 @@ SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156, 157, 158, 159, 160, 161, 163, 169);
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================================
+-- 菜单及权限配置：优秀成果管理
+-- ============================================================
+-- 删除旧条目（perm_id=35，component 为空），避免路由冲突
+DELETE FROM sys_permission WHERE perm_id = 35;
+
+-- 优秀成果管理（整合到成果与审批管理下，父级 perm_id=30）
+INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order)
+VALUES (202, 30, '优秀成果管理', 'achievement:excellent:list', 2, '/achievement/excellent', 'achievement/excellent/index', 'Medal', 5)
+ON DUPLICATE KEY UPDATE parent_id = 30, perm_name = '优秀成果管理', perm_code = 'achievement:excellent:list', path = '/achievement/excellent', component = 'achievement/excellent/index', icon = 'Medal', sort_order = 5;
+
+-- 管理员拥有优秀成果管理权限
+INSERT INTO sys_role_permission (role_id, perm_id) VALUES (1, 202);
+
+-- 教师拥有优秀成果管理权限（查看、认定、导出）
+INSERT INTO sys_role_permission (role_id, perm_id) VALUES (2, 202);
 
 SET FOREIGN_KEY_CHECKS = 1;
