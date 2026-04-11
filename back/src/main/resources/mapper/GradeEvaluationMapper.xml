@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.GradeEvaluationMapper">
+
+    <!-- ==================== 管理员分页查询 ==================== -->
+    <select id="selectAdminPage" resultType="com.gdplatform.dto.GradeResp">
+        SELECT
+            gs.summary_id            AS summaryId,
+            gs.selection_id          AS selectionId,
+            gs.student_id            AS studentId,
+            su.real_name             AS studentName,
+            su.student_no            AS studentNo,
+            pt.topic_name            AS topicName,
+            ps.custom_topic_name     AS customTopicName,
+            ps.is_custom_topic       AS isCustomTopic,
+            ps.teacher_id            AS teacherId,
+            tu.real_name             AS teacherName,
+            ps.campus_name           AS campusName,
+            ps.academic_year         AS academicYear,
+            gs.evaluator_count       AS evaluatorCount,
+            gs.avg_regular_score     AS avgRegularScore,
+            gs.avg_thesis_score      AS avgThesisScore,
+            gs.avg_defense_score     AS avgDefenseScore,
+            gs.total_score           AS totalScore,
+            gs.grade_level           AS gradeLevel,
+            gs.adjusted_total_score  AS adjustedTotalScore,
+            gs.final_score           AS finalScore,
+            gs.adjusted_grade_level  AS adjustedGradeLevel,
+            gs.final_grade_level     AS finalGradeLevel,
+            gs.is_adjusted           AS isAdjusted,
+            gs.is_locked             AS isLocked,
+            gs.remark                AS remark,
+            gs.lock_time             AS lockTime,
+            lu.real_name             AS lockedByName,
+            gs.create_time           AS createTime
+        FROM grade_summary gs
+        INNER JOIN project_selection ps ON gs.selection_id = ps.selection_id AND ps.is_deleted = 0
+        INNER JOIN sys_user su ON gs.student_id = su.user_id AND su.is_deleted = 0
+        LEFT JOIN project_topic pt ON pt.topic_id = ps.topic_id AND pt.is_deleted = 0
+        LEFT JOIN sys_user tu ON ps.teacher_id = tu.user_id AND tu.is_deleted = 0
+        LEFT JOIN sys_user lu ON gs.locked_by = lu.user_id AND lu.is_deleted = 0
+        WHERE gs.is_deleted = 0
+        <if test="campusName != null and campusName != ''">
+            AND ps.campus_name = #{campusName}
+        </if>
+        <if test="academicYear != null and academicYear != ''">
+            AND ps.academic_year = #{academicYear}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (su.real_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR su.student_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR ps.custom_topic_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="gradeLevel != null and gradeLevel != ''">
+            AND gs.final_grade_level = #{gradeLevel}
+        </if>
+        ORDER BY gs.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countAdminPage" resultType="long">
+        SELECT COUNT(gs.summary_id)
+        FROM grade_summary gs
+        INNER JOIN project_selection ps ON gs.selection_id = ps.selection_id AND ps.is_deleted = 0
+        INNER JOIN sys_user su ON gs.student_id = su.user_id AND su.is_deleted = 0
+        LEFT JOIN project_topic pt ON pt.topic_id = ps.topic_id AND pt.is_deleted = 0
+        WHERE gs.is_deleted = 0
+        <if test="campusName != null and campusName != ''">
+            AND ps.campus_name = #{campusName}
+        </if>
+        <if test="academicYear != null and academicYear != ''">
+            AND ps.academic_year = #{academicYear}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (su.real_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR su.student_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR ps.custom_topic_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="gradeLevel != null and gradeLevel != ''">
+            AND gs.final_grade_level = #{gradeLevel}
+        </if>
+    </select>
+
+    <!-- ==================== 教师分页查询（只看本校学生） ==================== -->
+    <select id="selectTeacherPage" resultType="com.gdplatform.dto.GradeResp">
+        SELECT
+            gs.summary_id            AS summaryId,
+            gs.selection_id          AS selectionId,
+            gs.student_id            AS studentId,
+            su.real_name             AS studentName,
+            su.student_no            AS studentNo,
+            pt.topic_name            AS topicName,
+            ps.custom_topic_name     AS customTopicName,
+            ps.is_custom_topic       AS isCustomTopic,
+            ps.teacher_id            AS teacherId,
+            tu.real_name             AS teacherName,
+            ps.campus_name           AS campusName,
+            ps.academic_year         AS academicYear,
+            gs.evaluator_count       AS evaluatorCount,
+            gs.avg_regular_score     AS avgRegularScore,
+            gs.avg_thesis_score      AS avgThesisScore,
+            gs.avg_defense_score     AS avgDefenseScore,
+            gs.total_score           AS totalScore,
+            gs.grade_level           AS gradeLevel,
+            gs.adjusted_total_score  AS adjustedTotalScore,
+            gs.final_score           AS finalScore,
+            gs.adjusted_grade_level  AS adjustedGradeLevel,
+            gs.final_grade_level     AS finalGradeLevel,
+            gs.is_adjusted           AS isAdjusted,
+            gs.is_locked             AS isLocked,
+            gs.remark                AS remark,
+            gs.lock_time             AS lockTime,
+            gs.create_time           AS createTime
+        FROM grade_summary gs
+        INNER JOIN project_selection ps ON gs.selection_id = ps.selection_id AND ps.is_deleted = 0
+        INNER JOIN sys_user su ON gs.student_id = su.user_id AND su.is_deleted = 0
+        LEFT JOIN project_topic pt ON pt.topic_id = ps.topic_id AND pt.is_deleted = 0
+        LEFT JOIN sys_user tu ON ps.teacher_id = tu.user_id AND tu.is_deleted = 0
+        WHERE gs.is_deleted = 0
+        AND ps.campus_name = #{campusName}
+        <if test="academicYear != null and academicYear != ''">
+            AND ps.academic_year = #{academicYear}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (su.real_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR su.student_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR ps.custom_topic_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="gradeLevel != null and gradeLevel != ''">
+            AND gs.final_grade_level = #{gradeLevel}
+        </if>
+        ORDER BY gs.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countTeacherPage" resultType="long">
+        SELECT COUNT(gs.summary_id)
+        FROM grade_summary gs
+        INNER JOIN project_selection ps ON gs.selection_id = ps.selection_id AND ps.is_deleted = 0
+        INNER JOIN sys_user su ON gs.student_id = su.user_id AND su.is_deleted = 0
+        LEFT JOIN project_topic pt ON pt.topic_id = ps.topic_id AND pt.is_deleted = 0
+        WHERE gs.is_deleted = 0
+        AND ps.campus_name = #{campusName}
+        <if test="academicYear != null and academicYear != ''">
+            AND ps.academic_year = #{academicYear}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (su.real_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR su.student_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR ps.custom_topic_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="gradeLevel != null and gradeLevel != ''">
+            AND gs.final_grade_level = #{gradeLevel}
+        </if>
+    </select>
+
+    <!-- ==================== 学生分页查询（只查自己的） ==================== -->
+    <select id="selectStudentPage" resultType="com.gdplatform.dto.GradeResp">
+        SELECT
+            gs.summary_id            AS summaryId,
+            gs.selection_id          AS selectionId,
+            gs.student_id            AS studentId,
+            su.real_name             AS studentName,
+            su.student_no            AS studentNo,
+            pt.topic_name            AS topicName,
+            ps.custom_topic_name     AS customTopicName,
+            ps.is_custom_topic       AS isCustomTopic,
+            ps.teacher_id            AS teacherId,
+            tu.real_name             AS teacherName,
+            ps.campus_name           AS campusName,
+            ps.academic_year         AS academicYear,
+            gs.evaluator_count       AS evaluatorCount,
+            gs.avg_regular_score     AS avgRegularScore,
+            gs.avg_thesis_score      AS avgThesisScore,
+            gs.avg_defense_score     AS avgDefenseScore,
+            gs.total_score           AS totalScore,
+            gs.grade_level           AS gradeLevel,
+            gs.adjusted_total_score  AS adjustedTotalScore,
+            gs.final_score           AS finalScore,
+            gs.adjusted_grade_level  AS adjustedGradeLevel,
+            gs.final_grade_level     AS finalGradeLevel,
+            gs.is_adjusted           AS isAdjusted,
+            gs.is_locked             AS isLocked,
+            gs.remark                AS remark,
+            gs.create_time           AS createTime
+        FROM grade_summary gs
+        INNER JOIN project_selection ps ON gs.selection_id = ps.selection_id AND ps.is_deleted = 0
+        INNER JOIN sys_user su ON gs.student_id = su.user_id AND su.is_deleted = 0
+        LEFT JOIN project_topic pt ON pt.topic_id = ps.topic_id AND pt.is_deleted = 0
+        LEFT JOIN sys_user tu ON ps.teacher_id = tu.user_id AND tu.is_deleted = 0
+        WHERE gs.is_deleted = 0
+        AND gs.student_id = #{studentId}
+        ORDER BY gs.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countStudentPage" resultType="long">
+        SELECT COUNT(gs.summary_id)
+        FROM grade_summary gs
+        WHERE gs.is_deleted = 0
+        AND gs.student_id = #{studentId}
+    </select>
+
+    <!-- ==================== 查询某学生的所有教师评分明细 ==================== -->
+    <select id="selectDetailByStudent" resultType="com.gdplatform.dto.GradeResp$GradeDetailItem">
+        SELECT
+            ge.grade_id           AS gradeId,
+            ge.evaluator_id       AS evaluatorId,
+            ru.real_name          AS evaluatorName,
+            ge.regular_score      AS regularScore,
+            ge.thesis_score       AS thesisScore,
+            ge.defense_score      AS defenseScore,
+            ge.total_score        AS totalScore,
+            ge.comment            AS comment,
+            ge.status             AS status,
+            ge.is_locked          AS isLocked,
+            ge.create_time        AS createTime
+        FROM grade_evaluation ge
+        LEFT JOIN sys_user ru ON ge.evaluator_id = ru.user_id AND ru.is_deleted = 0
+        WHERE ge.is_deleted = 0
+        AND ge.selection_id = #{selectionId}
+        AND ge.student_id = #{studentId}
+        ORDER BY ge.create_time ASC
+    </select>
+
+</mapper>

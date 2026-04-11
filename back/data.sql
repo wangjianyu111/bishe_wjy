@@ -352,6 +352,7 @@ CREATE TABLE doc_template (
   is_deleted TINYINT DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='模板文件';
 
+DROP TABLE IF EXISTS doc_file;
 CREATE TABLE doc_file (
   file_id BIGINT PRIMARY KEY AUTO_INCREMENT,
   original_name VARCHAR(512) NOT NULL,
@@ -518,22 +519,64 @@ CREATE TABLE approval_record (
   CONSTRAINT fk_appr_user FOREIGN KEY (approver_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审批意见(通用)';
 
+CREATE TABLE IF NOT EXISTS grade_summary (
+  summary_id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+  selection_id         BIGINT NOT NULL COMMENT '选题ID',
+  student_id          BIGINT NOT NULL COMMENT '学生ID',
+  evaluator_count     INT DEFAULT 0 COMMENT '参与评分的教师数量',
+  avg_regular_score   DECIMAL(5,2) DEFAULT NULL COMMENT '各教师平时均分',
+  avg_thesis_score    DECIMAL(5,2) DEFAULT NULL COMMENT '各教师论文均分',
+  avg_defense_score   DECIMAL(5,2) DEFAULT NULL COMMENT '各教师答辩均分',
+  total_score         DECIMAL(5,2) DEFAULT NULL COMMENT '系统计算总分（权重：平时30%+论文40%+答辩30%）',
+  grade_level         VARCHAR(20) DEFAULT NULL COMMENT '优秀/良好/中等/及格/不及格',
+  record_count        INT DEFAULT 0 COMMENT '各教师评分记录数量',
+  adjusted_total_score DECIMAL(5,2) DEFAULT NULL COMMENT '管理员调整后的总分',
+  final_score         DECIMAL(5,2) DEFAULT NULL COMMENT '最终确认总分（优先调整值）',
+  adjusted_grade_level VARCHAR(20) DEFAULT NULL COMMENT '管理员调整后的等级',
+  final_grade_level   VARCHAR(20) DEFAULT NULL COMMENT '最终确认等级',
+  is_adjusted         TINYINT DEFAULT 0 COMMENT '是否有管理员调整（0否 1是）',
+  is_locked           TINYINT DEFAULT 0 COMMENT '是否已锁定（0未锁定 1已锁定）',
+  lock_time           DATETIME DEFAULT NULL COMMENT '锁定时间',
+  locked_by           BIGINT DEFAULT NULL COMMENT '锁定人',
+  remark              VARCHAR(500) DEFAULT NULL COMMENT '管理员备注',
+  create_time         DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_time         DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_deleted          TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+  UNIQUE KEY uk_grade_selection (selection_id),
+  CONSTRAINT fk_summary_sel FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
+  CONSTRAINT fk_summary_student FOREIGN KEY (student_id) REFERENCES sys_user (user_id),
+  CONSTRAINT fk_summary_locked FOREIGN KEY (locked_by) REFERENCES sys_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成绩汇总表';
+
+-- ============================================================
+-- 教师评分明细表
+-- ============================================================
+DROP TABLE IF EXISTS grade_evaluation;
 CREATE TABLE grade_evaluation (
   grade_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  selection_id BIGINT NOT NULL,
-  regular_score DECIMAL(5,2) DEFAULT NULL COMMENT '平时',
-  thesis_score DECIMAL(5,2) DEFAULT NULL COMMENT '论文',
-  defense_score DECIMAL(5,2) DEFAULT NULL COMMENT '答辩',
-  total_score DECIMAL(5,2) DEFAULT NULL,
-  grade_level VARCHAR(20) DEFAULT NULL COMMENT '优/良/中/及格/不及格',
-  evaluator_id BIGINT DEFAULT NULL,
-  remark VARCHAR(500) DEFAULT NULL,
+  selection_id BIGINT NOT NULL COMMENT '选题ID',
+  student_id BIGINT NOT NULL COMMENT '学生ID（冗余）',
+  evaluator_id BIGINT NOT NULL COMMENT '评分教师ID',
+  evaluator_name VARCHAR(50) DEFAULT NULL COMMENT '评分教师姓名（冗余）',
+  regular_score DECIMAL(5,2) DEFAULT NULL COMMENT '平时成绩（0-100）',
+  thesis_score DECIMAL(5,2) DEFAULT NULL COMMENT '论文成绩（0-100）',
+  defense_score DECIMAL(5,2) DEFAULT NULL COMMENT '答辩成绩（0-100）',
+  total_score DECIMAL(5,2) DEFAULT NULL COMMENT '本次评分总分',
+  comment VARCHAR(500) DEFAULT NULL COMMENT '评语',
+  status VARCHAR(20) DEFAULT 'SUBMITTED' COMMENT '状态（SUBMITTED草稿/已提交）',
+  is_locked TINYINT DEFAULT 0 COMMENT '是否已锁定（0未锁定 1已锁定）',
+  lock_time DATETIME DEFAULT NULL,
+  locked_by BIGINT DEFAULT NULL,
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_grade_selection (selection_id),
+  is_deleted TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+  KEY idx_grade_selection (selection_id),
+  KEY idx_grade_student (student_id),
+  KEY idx_grade_evaluator (evaluator_id),
   CONSTRAINT fk_grade_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
-  CONSTRAINT fk_grade_eval FOREIGN KEY (evaluator_id) REFERENCES sys_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成绩评审';
+  CONSTRAINT fk_grade_student FOREIGN KEY (student_id) REFERENCES sys_user (user_id),
+  CONSTRAINT fk_grade_evaluator FOREIGN KEY (evaluator_id) REFERENCES sys_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成绩评审（每位教师对每个学生的单次评分）';
 
 CREATE TABLE excellent_achievement (
   ex_id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -714,7 +757,7 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (31, 30,'成果提交管理',    'achievement:submit',         2, '/achievement/submit',   'achievement/submit/index', 'Upload',              1),
 (32, 30,'答辩安排管理',    'achievement:defense',        2, '/achievement/defense',  'achievement/defense/index', 'Microphone',          2),
 (33, 30,'审批意见管理',    'achievement:approval', 2, '/achievement/approval', 'achievement/approval/index', 'Select',              3),
-(34, 30,'成绩评审管理',    'achievement:grade',          2, '/achievement/grade',    NULL,                  'Star',                4),
+(34, 30,'成绩评审管理',    'achievement:grade',          2, '/achievement/grade',    'achievement/grade/index',      'Star',                4),
 (35, 30,'优秀成果管理',    'achievement:excellent',      2, '/achievement/excellent',NULL,                  'Medal',               5);
 
 -- （五）指导与质量监控管理
@@ -781,7 +824,11 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (125, 31,'成果管理',   'achievement:submit:manage', 4, 1),
 (126, 32,'安排答辩',   'achievement:defense:arrange',4,1),
 (127, 33,'审批',       'achievement:approval:do',  4, 1),
-(128, 34,'录入成绩',   'achievement:grade:input',   4, 1),
+(169, 34,'成绩查看',  'achievement:grade:view',   4, 1),
+(170, 34,'录入成绩',  'achievement:grade:input',  4, 2),
+(171, 34,'调整成绩',  'achievement:grade:adjust',4, 3),
+(172, 34,'锁定成绩',  'achievement:grade:lock',  4, 4),
+(173, 34,'成绩管理',  'achievement:grade:manage',4, 0),
 (129, 35,'评定优秀',   'achievement:excellent:add', 4, 1),
 -- 答辩权限
 (161, 32,'答辩列表',  'achievement:defense:list',  4, 1),
@@ -834,7 +881,7 @@ SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168);
+(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173);
 
 -- 学生：只能访问与自己相关的模块（选题浏览、选题申请、项目进度、中期检查、文档、成果、指导）
 INSERT INTO sys_role_permission (role_id, perm_id)
@@ -842,6 +889,6 @@ SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 33, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156, 157, 158, 159, 160, 161, 163);
+(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156, 157, 158, 159, 160, 161, 163, 169);
 
 SET FOREIGN_KEY_CHECKS = 1;
