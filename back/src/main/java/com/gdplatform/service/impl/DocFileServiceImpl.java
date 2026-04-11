@@ -31,7 +31,7 @@ public class DocFileServiceImpl implements DocFileService {
     private final DocFileMapper docFileMapper;
 
     private static final List<String> ALLOWED_TYPES = Arrays.asList(
-            "doc", "docx", "pdf", "zip", "rar"
+            "doc", "docx", "xls", "xlsx", "csv","pdf", "zip", "rar", "7z", "tar", "gz"
     );
 
     @Value("${gd.upload.path:./uploads}")
@@ -57,7 +57,7 @@ public class DocFileServiceImpl implements DocFileService {
         String ext = getFileExtension(originalName).toLowerCase();
 
         if (!ALLOWED_TYPES.contains(ext)) {
-            throw new BizException("不支持的文件格式，仅支持：doc/docx/pdf/zip/rar");
+            throw new BizException("不支持的文件格式，仅支持：doc/docx/xls/xlsx/pdf/zip/rar/7z/tar/gz");
         }
 
         long maxSize = 50 * 1024 * 1024L;

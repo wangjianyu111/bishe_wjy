@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gdplatform.mapper.DefenseSessionMapper">
+
+    <resultMap id="SessionRespMap" type="com.gdplatform.dto.DefenseSessionResp">
+        <id column="session_id" property="sessionId"/>
+        <result column="session_name" property="sessionName"/>
+        <result column="defense_date" property="defenseDate"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="location" property="location"/>
+        <result column="defense_form" property="defenseForm"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="campus_name" property="campusName"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="file_id" property="fileId"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="mime_type" property="mimeType"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <resultMap id="ArrangeRespMap" type="com.gdplatform.dto.DefenseArrangeResp">
+        <id column="arrange_id" property="arrangeId"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="session_name" property="sessionName"/>
+        <result column="defense_date" property="defenseDate"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="location" property="location"/>
+        <result column="defense_form" property="defenseForm"/>
+        <result column="academic_year" property="academicYear"/>
+        <result column="file_id" property="fileId"/>
+        <result column="file_name" property="fileName"/>
+        <result column="remark" property="remark"/>
+        <result column="selection_id" property="selectionId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="student_name" property="studentName"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="topic_name" property="topicName"/>
+        <result column="custom_topic_name" property="customTopicName"/>
+        <result column="is_custom_topic" property="isCustomTopic"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="teacher_name" property="teacherName"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 管理员/教师：查询答辩场次列表（关联文件信息） -->
+    <select id="selectSessionPage" resultMap="SessionRespMap">
+        SELECT
+            ds.session_id,
+            ds.session_name,
+            ds.defense_date,
+            ds.start_time,
+            ds.end_time,
+            ds.location,
+            ds.defense_form,
+            ds.academic_year,
+            ds.campus_name,
+            ds.teacher_id,
+            ds.file_id,
+            df.original_name AS file_name,
+            df.file_size,
+            df.mime_type,
+            ds.remark,
+            ds.create_time
+        FROM defense_session ds
+        LEFT JOIN doc_file df ON ds.file_id = df.file_id AND df.is_deleted = 0
+        WHERE ds.is_deleted = 0
+        <if test="campusName != null and campusName != ''">
+            AND ds.campus_name = #{campusName}
+        </if>
+        <if test="academicYear != null and academicYear != ''">
+            AND ds.academic_year = #{academicYear}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (ds.session_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR ds.location LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY ds.defense_date DESC, ds.start_time ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countSessionPage" resultType="long">
+        SELECT COUNT(*)
+        FROM defense_session ds
+        WHERE ds.is_deleted = 0
+        <if test="campusName != null and campusName != ''">
+            AND ds.campus_name = #{campusName}
+        </if>
+        <if test="academicYear != null and academicYear != ''">
+            AND ds.academic_year = #{academicYear}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (ds.session_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR ds.location LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <!-- 教师：查询本校答辩场次 -->
+    <select id="selectSessionPageForTeacher" resultMap="SessionRespMap">
+        SELECT
+            ds.session_id,
+            ds.session_name,
+            ds.defense_date,
+            ds.start_time,
+            ds.end_time,
+            ds.location,
+            ds.defense_form,
+            ds.academic_year,
+            ds.campus_name,
+            ds.teacher_id,
+            ds.file_id,
+            df.original_name AS file_name,
+            df.file_size,
+            df.mime_type,
+            ds.remark,
+            ds.create_time
+        FROM defense_session ds
+        LEFT JOIN doc_file df ON ds.file_id = df.file_id AND df.is_deleted = 0
+        WHERE ds.is_deleted = 0
+        AND ds.teacher_id = #{teacherId}
+        <if test="academicYear != null and academicYear != ''">
+            AND ds.academic_year = #{academicYear}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (ds.session_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR ds.location LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY ds.defense_date DESC, ds.start_time ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countSessionPageForTeacher" resultType="long">
+        SELECT COUNT(*)
+        FROM defense_session ds
+        WHERE ds.is_deleted = 0
+        AND ds.teacher_id = #{teacherId}
+        <if test="academicYear != null and academicYear != ''">
+            AND ds.academic_year = #{academicYear}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (ds.session_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR ds.location LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <!-- 学生：查询自己选题所属学校的答辩安排 -->
+    <select id="selectSessionPageForStudent" resultMap="SessionRespMap">
+        SELECT DISTINCT
+            ds.session_id,
+            ds.session_name,
+            ds.defense_date,
+            ds.start_time,
+            ds.end_time,
+            ds.location,
+            ds.defense_form,
+            ds.academic_year,
+            ds.campus_name,
+            ds.teacher_id,
+            ds.file_id,
+            df.original_name AS file_name,
+            df.file_size,
+            df.mime_type,
+            ds.remark,
+            ds.create_time
+        FROM defense_session ds
+        INNER JOIN project_selection ps ON ps.campus_name = ds.campus_name AND ps.is_deleted = 0 AND ps.status = 'APPROVED'
+        LEFT JOIN doc_file df ON ds.file_id = df.file_id AND df.is_deleted = 0
+        WHERE ds.is_deleted = 0
+        AND ps.student_id = #{studentId}
+        <if test="academicYear != null and academicYear != ''">
+            AND ds.academic_year = #{academicYear}
+        </if>
+        ORDER BY ds.defense_date DESC, ds.start_time ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countSessionPageForStudent" resultType="long">
+        SELECT COUNT(DISTINCT ds.session_id)
+        FROM defense_session ds
+        INNER JOIN project_selection ps ON ps.campus_name = ds.campus_name AND ps.is_deleted = 0 AND ps.status = 'APPROVED'
+        WHERE ds.is_deleted = 0
+        AND ps.student_id = #{studentId}
+        <if test="academicYear != null and academicYear != ''">
+            AND ds.academic_year = #{academicYear}
+        </if>
+    </select>
+
+    <!-- 查询答辩安排明细 -->
+    <select id="selectArrangementPage" resultMap="ArrangeRespMap">
+        SELECT
+            da.arrange_id,
+            da.session_id,
+            ds.session_name,
+            ds.defense_date,
+            ds.start_time,
+            ds.end_time,
+            ds.location,
+            ds.defense_form,
+            ds.academic_year,
+            ds.file_id,
+            df.original_name AS file_name,
+            ds.remark,
+            da.selection_id,
+            da.student_id,
+            su.real_name AS student_name,
+            su.student_no,
+            pt.topic_name,
+            ps.custom_topic_name,
+            ps.is_custom_topic,
+            da.teacher_id,
+            tu.real_name AS teacher_name,
+            da.create_time
+        FROM defense_arrangement da
+        INNER JOIN defense_session ds ON da.session_id = ds.session_id AND ds.is_deleted = 0
+        INNER JOIN project_selection ps ON da.selection_id = ps.selection_id AND ps.is_deleted = 0
+        INNER JOIN sys_user su ON da.student_id = su.user_id AND su.is_deleted = 0
+        LEFT JOIN project_topic pt ON pt.topic_id = ps.topic_id AND pt.is_deleted = 0
+        LEFT JOIN sys_user tu ON ps.teacher_id = tu.user_id AND tu.is_deleted = 0
+        LEFT JOIN doc_file df ON ds.file_id = df.file_id AND df.is_deleted = 0
+        WHERE da.is_deleted = 0
+        <if test="sessionId != null">
+            AND da.session_id = #{sessionId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (su.real_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR su.student_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY da.sort_order ASC, da.create_time ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countArrangementPage" resultType="long">
+        SELECT COUNT(*)
+        FROM defense_arrangement da
+        INNER JOIN defense_session ds ON da.session_id = ds.session_id AND ds.is_deleted = 0
+        INNER JOIN project_selection ps ON da.selection_id = ps.selection_id AND ps.is_deleted = 0
+        INNER JOIN sys_user su ON da.student_id = su.user_id AND su.is_deleted = 0
+        LEFT JOIN project_topic pt ON pt.topic_id = ps.topic_id AND pt.is_deleted = 0
+        WHERE da.is_deleted = 0
+        <if test="sessionId != null">
+            AND da.session_id = #{sessionId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (su.real_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR su.student_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR pt.topic_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+</mapper>

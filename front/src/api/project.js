@@ -304,3 +304,30 @@ export function reviewArchive(data) {
 export function fetchArchiveDetail(archiveId) {
   return http.get(`/project/doc-archive/${archiveId}`)
 }
+
+// ---------- 成果提交管理 ----------
+export function fetchMyAchievement(selectionId) {
+  return http.get('/achievement/submit/my', { params: { selectionId } })
+}
+
+export function submitAchievement(formData) {
+  return http.post('/achievement/submit', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export function deleteAchievement(submitId) {
+  return http.delete(`/achievement/submit/${submitId}`)
+}
+
+export function fetchAdminAchievementPage(params) {
+  return http.get('/achievement/submit/admin/page', { params })
+}
+
+export function fetchTeacherAchievementPage(params) {
+  return http.get('/achievement/submit/teacher/page', { params })
+}
+
+export function fetchAchievementDetail(submitId) {
+  return http.get(`/achievement/submit/${submitId}`)
+}

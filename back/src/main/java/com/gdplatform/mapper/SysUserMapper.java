@@ -70,4 +70,12 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     void deleteUserRoleByUserId(@Param("userId") Long userId);
 
     void batchInsertUserRole(@Param("userId") Long userId, @Param("roleIds") List<Long> roleIds);
+
+    @Select("<script>" +
+            "SELECT user_id FROM sys_user WHERE is_deleted = 0 AND status = 1 AND user_type = 1 " +
+            "<if test='campusName != null and campusName != \"\"'>" +
+            "AND campus_name = #{campusName} " +
+            "</if>" +
+            "</script>")
+    List<Long> selectStudentIdsByCampusName(@Param("campusName") String campusName);
 }

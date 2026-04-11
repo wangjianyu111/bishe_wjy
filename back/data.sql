@@ -5,6 +5,23 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================
+-- 成果提交表
+-- ============================================================
+DROP TABLE IF EXISTS achievement_submit;
+CREATE TABLE achievement_submit (
+    submit_id        BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '提交ID',
+    selection_id     BIGINT NOT NULL COMMENT '选题ID',
+    student_id       BIGINT NOT NULL COMMENT '学生ID',
+    file_id          BIGINT DEFAULT NULL COMMENT '附件ID',
+    remark           VARCHAR(500) DEFAULT NULL COMMENT '备注说明',
+    create_time      DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    is_deleted       TINYINT DEFAULT 0 COMMENT '0正常 1删除',
+    KEY idx_selection (selection_id),
+    KEY idx_student (student_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成果提交表';
+
+-- ============================================================
 -- 文档归档表
 -- ============================================================
 DROP TABLE IF EXISTS doc_archive;
@@ -455,25 +472,36 @@ CREATE TABLE achievement_submission (
 
 CREATE TABLE defense_session (
   session_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  session_name VARCHAR(200) NOT NULL,
-  defense_date DATE NOT NULL,
-  start_time TIME DEFAULT NULL,
-  end_time TIME DEFAULT NULL,
-  location VARCHAR(200) DEFAULT NULL,
-  academic_year VARCHAR(20) NOT NULL,
-  remark VARCHAR(500) DEFAULT NULL,
+  session_name VARCHAR(200) NOT NULL COMMENT '场次名称',
+  defense_date DATE NOT NULL COMMENT '答辩日期',
+  start_time TIME DEFAULT NULL COMMENT '开始时间',
+  end_time TIME DEFAULT NULL COMMENT '结束时间',
+  location VARCHAR(200) DEFAULT NULL COMMENT '答辩地点',
+  defense_form VARCHAR(20) DEFAULT NULL COMMENT '答辩形式：ONLINE线上 OFFLINE线下',
+  academic_year VARCHAR(20) NOT NULL COMMENT '学年',
+  file_id BIGINT DEFAULT NULL COMMENT '附件ID',
+  teacher_id BIGINT DEFAULT NULL COMMENT '发布教师ID',
+  campus_name VARCHAR(100) DEFAULT NULL COMMENT '所属学校',
+  remark VARCHAR(500) DEFAULT NULL COMMENT '备注说明',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-  is_deleted TINYINT DEFAULT 0
+  is_deleted TINYINT DEFAULT 0,
+  KEY idx_teacher (teacher_id),
+  KEY idx_campus (campus_name),
+  KEY idx_date (defense_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='答辩场次';
 
 CREATE TABLE defense_arrangement (
   arrange_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  session_id BIGINT NOT NULL,
-  selection_id BIGINT NOT NULL,
-  sort_order INT DEFAULT 0,
-  status VARCHAR(20) DEFAULT 'SCHEDULED',
+  session_id BIGINT NOT NULL COMMENT '场次ID',
+  selection_id BIGINT NOT NULL COMMENT '选题ID',
+  student_id BIGINT NOT NULL COMMENT '学生ID',
+  teacher_id BIGINT DEFAULT NULL COMMENT '指导教师ID',
+  sort_order INT DEFAULT 0 COMMENT '答辩顺序',
+  status VARCHAR(20) DEFAULT 'SCHEDULED' COMMENT '状态：SCHEDULED待答辩 DONE已完成',
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  is_deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
   UNIQUE KEY uk_defense_session_sel (session_id, selection_id),
+  KEY idx_student (student_id),
   CONSTRAINT fk_def_sess FOREIGN KEY (session_id) REFERENCES defense_session (session_id),
   CONSTRAINT fk_def_sel FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='答辩安排';
@@ -661,8 +689,8 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 -- （四）成果与审批管理
 INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type, path, component, icon, sort_order) VALUES
 (30, 0, '成果与审批管理',  'achievement',                1, '/achievement',          NULL,                  'Trophy',              4),
-(31, 30,'成果提交管理',    'achievement:submit',         2, '/achievement/submit',   NULL,                  'Upload',              1),
-(32, 30,'答辩安排管理',    'achievement:defense',        2, '/achievement/defense',  NULL,                  'Microphone',          2),
+(31, 30,'成果提交管理',    'achievement:submit',         2, '/achievement/submit',   'achievement/submit/index', 'Upload',              1),
+(32, 30,'答辩安排管理',    'achievement:defense',        2, '/achievement/defense',  'achievement/defense/index', 'Microphone',          2),
 (33, 30,'审批意见管理',    'achievement:approval',       2, '/achievement/approval', NULL,                  'Select',              3),
 (34, 30,'成绩评审管理',    'achievement:grade',          2, '/achievement/grade',    NULL,                  'Star',                4),
 (35, 30,'优秀成果管理',    'achievement:excellent',      2, '/achievement/excellent',NULL,                  'Medal',               5);
@@ -728,16 +756,24 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (150, 24,'上传版本',  'doc:version:submit',  4, 1),
 (151, 24,'审核版本',  'doc:version:review',  4, 2),
 -- 成果
-(125, 31,'提交成果',   'achievement:submit:add', 4, 1),
+(125, 31,'成果管理',   'achievement:submit:manage', 4, 1),
 (126, 32,'安排答辩',   'achievement:defense:arrange',4,1),
 (127, 33,'审批',       'achievement:approval:do',  4, 1),
 (128, 34,'录入成绩',   'achievement:grade:input',   4, 1),
 (129, 35,'评定优秀',   'achievement:excellent:add', 4, 1),
+-- 答辩权限
+(161, 32,'答辩列表',  'achievement:defense:list',  4, 1),
+(162, 32,'查看明细',  'achievement:defense:detail', 4, 2),
 -- 指导
 (130, 41,'添加记录',   'guidance:record:add',   4, 1),
 (131, 42,'教师反馈',   'guidance:feedback:add', 4, 1),
 (132, 43,'发起预警',   'guidance:warning:add',  4, 1),
 (134, 44,'分配指导教师','guidance:relation:assign',4,1),
+-- 成果提交
+(157, 31,'我的成果列表','achievement:submit:list',4,1),
+(158, 31,'成果上传',   'achievement:submit:upload', 4, 2),
+(159, 31,'成果删除',   'achievement:submit:del', 4, 3),
+(160, 31,'成果下载',   'achievement:submit:download',4,4),
 -- 进度管理
 (136, 14,'进度列表',   'project:progress:list', 4, 1),
 (142, 14,'添加进度',   'project:progress:add',  4, 2),
@@ -769,7 +805,7 @@ SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156);
+(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162);
 
 -- 学生：只能访问与自己相关的模块（选题浏览、选题申请、项目进度、中期检查、文档、成果、指导）
 INSERT INTO sys_role_permission (role_id, perm_id)
@@ -777,6 +813,6 @@ SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
 (10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156);
+(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156, 157, 158, 159, 160, 161);
 
 SET FOREIGN_KEY_CHECKS = 1;
