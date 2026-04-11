@@ -603,6 +603,28 @@ CREATE TABLE quality_warning (
   CONSTRAINT fk_warn_handler FOREIGN KEY (handler_id) REFERENCES sys_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='质量预警';
 
+-- ---------- 审批意见管理 ----------
+CREATE TABLE approval_opinion (
+  opinion_id    BIGINT       PRIMARY KEY AUTO_INCREMENT,
+  selection_id  BIGINT       NOT NULL COMMENT '关联选题ID',
+  doc_id        BIGINT       DEFAULT NULL COMMENT '关联文档ID（可选）',
+  doc_type      VARCHAR(50)  DEFAULT NULL COMMENT '文档类型：PROPOSAL/MIDTERM/THESIS/ARCHIVE',
+  round_no      INT          NOT NULL DEFAULT 1 COMMENT '评审轮次',
+  reviewer_id   BIGINT       NOT NULL COMMENT '评审教师ID',
+  score         INT          DEFAULT NULL COMMENT '评分 0-100',
+  comment       TEXT         DEFAULT NULL COMMENT '文字批注/意见',
+  file_id       BIGINT       DEFAULT NULL COMMENT '附件ID',
+  status        VARCHAR(20)  NOT NULL DEFAULT 'SUBMITTED' COMMENT 'SUBMITTED待处理 PASSED通过 FAILED驳回',
+  create_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  update_time   DATETIME     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  is_deleted    TINYINT      NOT NULL DEFAULT 0,
+  KEY idx_opinion_selection (selection_id),
+  KEY idx_opinion_reviewer (reviewer_id),
+  KEY idx_opinion_doc (doc_type),
+  CONSTRAINT fk_opinion_selection FOREIGN KEY (selection_id) REFERENCES project_selection (selection_id),
+  CONSTRAINT fk_opinion_reviewer FOREIGN KEY (reviewer_id) REFERENCES sys_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审批意见管理';
+
 -- ---------- 运维 ----------
 DROP TABLE IF EXISTS sys_operation_log;
 DROP TABLE IF EXISTS sys_config;
@@ -691,7 +713,7 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (30, 0, '成果与审批管理',  'achievement',                1, '/achievement',          NULL,                  'Trophy',              4),
 (31, 30,'成果提交管理',    'achievement:submit',         2, '/achievement/submit',   'achievement/submit/index', 'Upload',              1),
 (32, 30,'答辩安排管理',    'achievement:defense',        2, '/achievement/defense',  'achievement/defense/index', 'Microphone',          2),
-(33, 30,'审批意见管理',    'achievement:approval',       2, '/achievement/approval', NULL,                  'Select',              3),
+(33, 30,'审批意见管理',    'achievement:approval', 2, '/achievement/approval', 'achievement/approval/index', 'Select',              3),
 (34, 30,'成绩评审管理',    'achievement:grade',          2, '/achievement/grade',    NULL,                  'Star',                4),
 (35, 30,'优秀成果管理',    'achievement:excellent',      2, '/achievement/excellent',NULL,                  'Medal',               5);
 
@@ -789,7 +811,14 @@ INSERT INTO sys_permission (perm_id, parent_id, perm_name, perm_code, perm_type,
 (153, 24,'上传归档',   'doc:archive:submit', 4, 2),
 (154, 24,'撤回归档',   'doc:archive:recall', 4, 3),
 (155, 24,'审核归档',   'doc:archive:review', 4, 4),
-(156, 24,'下载归档',   'doc:archive:download',4,5);
+(156, 24,'下载归档',   'doc:archive:download',4,5),
+-- 审批意见管理
+(163, 33,'查看意见',  'achievement:approval:view', 4, 1),
+(164, 33,'添加意见',  'achievement:approval:add',  4, 2),
+(165, 33,'编辑意见',  'achievement:approval:edit', 4, 3),
+(166, 33,'删除意见',  'achievement:approval:del',  4, 4),
+(167, 33,'更新状态',  'achievement:approval:status',4, 5),
+(168, 33,'审批管理',  'achievement:approval:manage',4, 0);
 
 -- ============================================================
 -- 角色权限分配
@@ -805,14 +834,14 @@ SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
 (1, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 33, 34, 35, 40, 41, 42, 43, 44, 50, 54, 55)
 UNION
 SELECT 2, perm_id FROM sys_permission WHERE perm_id IN
-(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162);
+(101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 128, 129, 130, 131, 132, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168);
 
 -- 学生：只能访问与自己相关的模块（选题浏览、选题申请、项目进度、中期检查、文档、成果、指导）
 INSERT INTO sys_role_permission (role_id, perm_id)
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 34, 35, 40, 41, 42, 43)
+(10, 11, 12, 14, 15, 20, 21, 22, 23, 25, 30, 31, 33, 34, 35, 40, 41, 42, 43)
 UNION
 SELECT 3, perm_id FROM sys_permission WHERE perm_id IN
-(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156, 157, 158, 159, 160, 161);
+(113, 114, 117, 120, 122, 127, 129, 130, 131, 136, 137, 138, 139, 143, 144, 145, 146, 147, 148, 150, 152, 153, 154, 156, 157, 158, 159, 160, 161, 163);
 
 SET FOREIGN_KEY_CHECKS = 1;
